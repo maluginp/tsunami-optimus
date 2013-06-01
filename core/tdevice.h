@@ -27,8 +27,10 @@ class TDevice : public QObject {
 public:
     enum Polarity{POLARITY_N = 0,POLARITY_P,POLARITY_UNDEF};
     enum Axis{AXIS_X,AXIS_Y};
-    TDevice();
-    TDevice(int id);
+//    TDevice();
+    explicit TDevice(int id){
+        id_ = id;
+    }
 
     explicit TDevice(QObject *parent = 0);
     virtual ~TDevice();
@@ -41,7 +43,8 @@ public:
     virtual QString image() = 0;
 
     QString image(     QString name );
-    QString     name();
+
+    QString name();
 
     TTerminal *terminal(  QString name );
     QList<TTerminal *> terminals();

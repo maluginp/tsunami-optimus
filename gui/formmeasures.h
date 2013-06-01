@@ -34,6 +34,7 @@ private slots:
     void selectMeasure(QModelIndex index);
 
     void clickAddSet();
+    void clickAddMeasure();
     void clickEditMeasure();
 
     void updateMeasures();

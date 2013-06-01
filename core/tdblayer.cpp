@@ -111,6 +111,7 @@ bool TDBLayer::exec()
 
     if(!ack){
         setError( gQueryHandle->lastError().text() );
+        printError();
     }else{
         gLastError = "";
         gQueryRecord = gQueryHandle->record();
@@ -160,6 +161,18 @@ bool TDBLayer:: isOpened()
 bool TDBLayer::isNext()
 {
     return gQueryHandle->next();
+}
+
+bool TDBLayer::hasError()
+{
+    return !gLastError.isEmpty();
+}
+
+void TDBLayer::printError()
+{
+    if(hasError()){
+        qDebug() << gLastError;
+    }
 }
 
 int TDBLayer::count()

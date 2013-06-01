@@ -116,7 +116,9 @@ HEADERS  += deviceworkspace.h \
     gui/formsetting.h \
     gui/formweightconst.h \
     core/tsetting.h \
-    gui/dialogs/dialogdeletedevices.h
+    gui/dialogs/dialogdeletedevices.h \
+    core/tdevice.h \
+    gui/gui_func.h
 
 FORMS    += deviceworkspace.ui \
     gui/formminimisation.ui \

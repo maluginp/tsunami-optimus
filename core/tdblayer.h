@@ -31,6 +31,8 @@ public:
     bool isOpened();
     bool isNext();
 
+    bool hasError();
+    void printError();
     int count();
 
     QString getError() { return gLastError; }

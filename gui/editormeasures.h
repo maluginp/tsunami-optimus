@@ -26,10 +26,10 @@ public:
 
     ~EditorMeasures();
     QString plot_type(){
-        return mType;
+        return type_;
     }
     QString name(){
-        return mName;
+        return name_;
     }
 
 private slots:
@@ -54,18 +54,19 @@ private:
     Ui::EditorMeasures *ui;
 
     bool mMeasuresChanged;
-    int mID;
-    QString mName;
-    QString mType;
-    QString mAuthor;
-    QString mCreated;
-    QString mChanged;
+    int id_;
+    QString name_;
+    QString type_;
+    QString author;
+    QString created_;
+    QString changed_;
     ManagerMeasures *managerMeasures;
-
+    bool isSelectedConstant_;
+    QList< MEASURE_DB > measures_;
 
     void loadInfo();
 
-    QList< MEASURE_DB > mMeasures;
+
 
     void setName(QString name);
     void setType(QString type);
@@ -74,7 +75,7 @@ private:
 
     QList< MEASURE_DB > measures();
 
-    int findDB(QString constant_string);
+    int findDB(QString constantString);
 
     int mCurrentMeasure;
     bool saveCurrentDB();

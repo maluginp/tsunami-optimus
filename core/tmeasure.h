@@ -135,6 +135,9 @@ public:
         return settings_;
     }
 
+
+    static int create( int datasetId, QString name,QString plotType );
+
 private:
     bool hasConsts_;
     int id_;

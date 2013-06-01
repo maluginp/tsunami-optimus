@@ -448,6 +448,16 @@ bool TMeasure::exists(){
     return res;
 }
 
+int TMeasure::create(int datasetId, QString name,QString plotType){
+    TDBLayer *dbLayer = TDBLayer::getInstance();
+    dbLayer->bindQuery( "INSERT INTO measures(dataset_id,name,plot_type) VALUES(:dataset_id,:name,:type)" )
+            ->bindValue(":name",name)
+            ->bindValue(":type",plotType)
+            ->bindValue(":dataset_id",datasetId)
+            ->exec();
+    return dbLayer->getInsertID();
+}
+
 
 
 QString TMeasure::importReadInfo(QStringList text, QString info){

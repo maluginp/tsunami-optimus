@@ -6,8 +6,7 @@
 #include "devices/devices.h"
 
 TDevice::TDevice(QObject *parent) :
-    QObject(parent)
-{
+    QObject(parent){
     id_ = -1;
 
 }
@@ -367,17 +366,16 @@ QString TDevice::deviceType()
     return QString("");
 }
 
-inline QList<TParameter *> TDevice::getParameters(){
+QList<TParameter *> TDevice::getParameters(){
     return parameters_;
 }
 
-inline void TDevice::setModel(QString model){
+void TDevice::setModel(QString model){
     model_ = model;
     return;
 }
 
-TParameter *TDevice::addParameter(QString param, QString desc, TParameter::TYPE_VALUE type)
-{
+TParameter *TDevice::addParameter(QString param, QString desc, TParameter::TYPE_VALUE type){
     TParameter *parameter;
 
     switch(type){
@@ -432,7 +430,7 @@ QString TDevice::image(QString name)
 }
 
 
-inline QString TDevice::name() {
+QString TDevice::name() {
     return name_;
 }
 
@@ -449,7 +447,7 @@ TTerminal *TDevice::terminal(QString name) {
     return NULL;
 }
 
-inline QList<TTerminal *> TDevice::terminals(){
+QList<TTerminal *> TDevice::terminals(){
     return terminals_;
 }
 

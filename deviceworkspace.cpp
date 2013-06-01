@@ -60,7 +60,8 @@ void DeviceWorkspace::showDialogOpenDevice(){
             QMessageBox::warning(this,trUtf8("Предупреждение"),trUtf8("Устройство не может быть открыто"));
             return;
         }
-        setWindowTitle( device()->name() +trUtf8(" - Рабочая область") );
+
+        setWindowTitle( device()->name() +trUtf8(" - � абочая область") );
         QString _polarity_name = device()->polarityName();
         ui->polarityTitleLabel->setText( _polarity_name );
         QString _img = device()->image();

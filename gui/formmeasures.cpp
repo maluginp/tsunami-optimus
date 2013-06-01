@@ -5,6 +5,7 @@
 #include "core/tdblayer.h"
 #include "delegates/delegates.h"
 #include "dialogs/dialogs.h"
+#include "gui_func.h"
 
 FormMeasures::FormMeasures(QWidget *parent) :
     QMainWindow(parent),
@@ -29,7 +30,8 @@ FormMeasures::FormMeasures(QWidget *parent) :
 
 
     connect(ui->btnAccept,SIGNAL(clicked()),this,SLOT(clickAccept()));
-    connect(ui->btnAddMeasure,SIGNAL(clicked()),this,SLOT(showEditorMeasures()));
+//    connect(ui->btnAddMeasure,SIGNAL(clicked()),this,SLOT(showEditorMeasures()));
+    connect(ui->btnAddMeasure,SIGNAL(clicked()),this,SLOT(clickAddMeasure()));
     connect(ui->listDataset,SIGNAL(clicked(QModelIndex)),this,SLOT(selectDataset(QModelIndex)));
     connect(ui->listMeasures,SIGNAL(clicked(QModelIndex)),this,SLOT(selectMeasure(QModelIndex)));
     connect(ui->actionAddSet,SIGNAL(triggered()),this,SLOT(clickAddSet()));
@@ -89,7 +91,6 @@ void FormMeasures::updateDatasetList(){
 
 void FormMeasures::selectDataset(QModelIndex index){
     QStringListModel *modelMeasures = static_cast<QStringListModel *>(ui->listDataset->model());
-
     QString _dataset = modelMeasures->data(index, Qt::DisplayRole).toString();
 
     managerMeasures_->setDataset( _dataset );
@@ -98,10 +99,13 @@ void FormMeasures::selectDataset(QModelIndex index){
 
     updateMeasureList( _dataset );
 
+    ui->tblInfo->model()->removeRows(0,ui->tblInfo->model()->rowCount() );
+    ui->tblInfo->setEnabled( false );
 }
 
 void FormMeasures::selectMeasure(QModelIndex index)
 {
+    ui->tblInfo->setEnabled( true );
     QStringListModel *modelMeasures = static_cast<QStringListModel *>(ui->listMeasures->model());
 
     QString _measure = modelMeasures->data(index, Qt::DisplayRole).toString();
@@ -143,8 +147,33 @@ void FormMeasures::clickAddSet(){
     QString _name_set = QInputDialog::getText(this,trUtf8("Добавить набор"),trUtf8("Название:"));
 
     if(managerMeasures_->CreateSet(_name_set)){
+        messageInfo("Набор измерений добавлен");
         updateDatasetList();
+    }else{
+        messageInfo("При создании набора измерений возникла ошибка");
     }
+}
+
+void FormMeasures::clickAddMeasure(){
+    if(managerMeasures_->dataset_id() == -1){
+        messageWarning("Выберите набор измерений");
+        return;
+    }
+    DialogAddMeasure dialog(this);
+    dialog.setTypes(  managerMeasures_->device()->plotTitles() );
+    if(dialog.exec() != QDialog::Accepted){
+       return;
+    }
+
+    int measureId = TMeasure::create( managerMeasures_->dataset_id(), dialog.name(), dialog.type() );
+    if(measureId == -1){
+        messageError( "Измерение не создано" );
+    }else{
+        messageInfo( "Измерение создано" );
+        updateMeasures();
+    }
+
+    return;
 }
 
 void FormMeasures::clickEditMeasure()

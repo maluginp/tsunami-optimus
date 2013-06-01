@@ -6,6 +6,7 @@
 #include "delegates/delegates.h"
 #include <float.h>
 #include "dialogs/dialogs.h"
+#include "gui_func.h"
 
 EditorMeasures::EditorMeasures(QString name,QString type, ManagerMeasures *manager,QWidget *parent) :
     QMainWindow(parent),
@@ -17,7 +18,7 @@ EditorMeasures::EditorMeasures(QString name,QString type, ManagerMeasures *manag
     setType(type);
     setManager(manager);
 
-    mID = -1;
+    id_ = -1;
     initialize();
 
     // plots
@@ -46,20 +47,8 @@ EditorMeasures::EditorMeasures(int measure_id,ManagerMeasures *manager, QWidget 
     setManager(manager);
     Open(measure_id);
 
-
     initialize();
     updateMeasures();
-
-    //    QStringList labelsMeasures;
-
-    //    labelsMeasures << "#";
-    //    labelsMeasures.append( managerMeasures->device()->columnTitles(plot_type()) );
-
-    //    QStandardItemModel *model = static_cast<QStandardItemModel *>(ui->tblMeasures->model());
-    //    model->setHorizontalHeaderLabels( labelsMeasures );
-    // plots
-
-
     loadInfo();
 
 
@@ -89,17 +78,19 @@ void EditorMeasures::setManager(ManagerMeasures *measure)
 
 bool EditorMeasures::Open(int measure_id)
 {
-    mID = measure_id;
+    id_ = measure_id;
 
-    TMeasure *measure = managerMeasures->openMeasure(mID);
+    TMeasure *measure = managerMeasures->openMeasure(id_);
     setName( measure->name()     );
     setType( measure->plotType() );
-    mMeasures = measure->measures( managerMeasures->device()->columnTitles(plot_type()) );
+    measures_ = measure->measures( managerMeasures->device()->columnTitles(plot_type()) );
 
-    mCreated = measure->created();
-    mChanged = measure->changed();
-    mAuthor  = measure->author();
+    created_ = measure->created();
+    changed_ = measure->changed();
+    author  = measure->author();
     mSettingMap = measure->settingMap();
+
+    isSelectedConstant_ = false;
 
     delete measure;
 
@@ -112,14 +103,14 @@ bool EditorMeasures::Open(int measure_id)
 
 void EditorMeasures::setName(QString name)
 {
-    mName = name;
+    name_ = name;
 
     setWindowTitle(name + trUtf8(" - ") + trUtf8("Редактор измерений"));
 }
 
 void EditorMeasures::setType(QString type)
 {
-    mType = type;
+    type_ = type;
 }
 
 EditorMeasures::~EditorMeasures()
@@ -160,6 +151,10 @@ void EditorMeasures::clickAddColumn(){
 
 void EditorMeasures::clickAddRow()
 {
+    if(!isSelectedConstant_){
+        messageWarning("Выберите константу из левого списка");
+        return;
+    }
     QStandardItemModel *model = static_cast<QStandardItemModel *>(ui->tblMeasures->model());
 
     QList<QStandardItem *> _row;
@@ -195,7 +190,7 @@ void EditorMeasures::changeDataConstant(QStandardItem *item)
         inc_db = true;
     }
 
-    mMeasures[id].inc = inc_db;
+    measures_[id].inc = inc_db;
 
     mMeasuresChanged = true;
 
@@ -211,19 +206,13 @@ void EditorMeasures::replotGraphics()
     QMap<QString,double> values;
 
     QStringList _labels;
-    //    for(int col=1; col < model->columnCount();col++){
-    //        _labels << model->headerData(col,Qt::Horizontal).toString();
-    //    }
     _labels = managerMeasures->device()->columnTitles( plot_type() );
-    if(mMeasures.count() == 0 || _labels.count() == 0){
+    if(measures_.count() == 0 || _labels.count() == 0){
         return;
     }
-
-    int _count_db = mMeasures.count();
+    int _count_db = measures_.count();
 
     saveCurrentDB();
-
-//    QMap<TDevice::AXIS,PLOT_AXIS_RANGE> _ranges;
 
     for(int tab_index=0; tab_index < ui->tabGraphics->count(); tab_index++){
         QString _name = ui->tabGraphics->tabText( tab_index );
@@ -237,18 +226,11 @@ void EditorMeasures::replotGraphics()
         label->position->setCoords(0.5, 0); // place position at center/top of axis rect
         label->setText("");
         label->setFont(QFont(font().family(), 14));
-
         QVector<double> axisX,axisY;
 
-//        _ranges[TDevice::AXIS_X].max =  -DBL_MAX;
-//        _ranges[TDevice::AXIS_X].min =  DBL_MAX;
-//        _ranges[TDevice::AXIS_Y].max =  -DBL_MAX;
-//        _ranges[TDevice::AXIS_Y].min =  DBL_MAX;
-
-        // constants
         for(int _db_i=0; _db_i < _count_db;_db_i++){
             axisX.clear(); axisY.clear();
-            MEASURE_DB _db = mMeasures.at(_db_i);
+            MEASURE_DB _db = measures_.at(_db_i);
 
             if(!_db.inc){
                 continue;
@@ -268,22 +250,6 @@ void EditorMeasures::replotGraphics()
                     }
 
                     QMap<TDevice::Axis,double> _values = managerMeasures->device()->computeValue(_name, values);
-
-
-
-//                    if( _values[TDevice::AXIS_X] < _ranges[TDevice::AXIS_X].min ){
-//                        _ranges[TDevice::AXIS_X].min = _values[TDevice::AXIS_X];
-//                    }
-//                    if( _values[TDevice::AXIS_Y] < _ranges[TDevice::AXIS_Y].min ){
-//                        _ranges[TDevice::AXIS_Y].min = _values[TDevice::AXIS_Y];
-//                    }
-//                    if( _values[TDevice::AXIS_X] > _ranges[TDevice::AXIS_X].max ){
-//                        _ranges[TDevice::AXIS_X].max = _values[TDevice::AXIS_X];
-//                    }
-//                    if( _values[TDevice::AXIS_Y] > _ranges[TDevice::AXIS_Y].max ){
-//                        _ranges[TDevice::AXIS_Y].max = _values[TDevice::AXIS_Y];
-//                    }
-
 
                     axisX.append( _values[TDevice::AXIS_X] );
                     axisY.append( _values[TDevice::AXIS_Y] );
@@ -308,13 +274,8 @@ void EditorMeasures::replotGraphics()
 
 
         }
-
-//        plot->xAxis->setRange( _ranges[TDevice::AXIS_X].min, _ranges[TDevice::AXIS_X].max   );
-//        plot->yAxis->setRange( _ranges[TDevice::AXIS_Y].min, _ranges[TDevice::AXIS_Y].max   );
         plot->rescaleAxes();
-
         plot->yAxis->setRangeUpper(plot->yAxis->range().upper + plot->yAxis->range().upper/5.0);
-
         plot->replot();
     }
 
@@ -344,13 +305,14 @@ void EditorMeasures::clickAddConstValue()
         }
 
 
+
         MEASURE_DB db;
         db.inc = true;
         db.constants.insert( _constant_names.at(0),value );
 
         db.columns.append( managerMeasures->device()->columnTitles(plot_type()) );
 
-        mMeasures.append( db );
+        measures_.append( db );
 
 
         QList<QStandardItem *> _rowConstant;
@@ -358,7 +320,6 @@ void EditorMeasures::clickAddConstValue()
         _rowConstant << new QStandardItem("1") << new QStandardItem(  QString("%1=%2").arg(_constant_names.at(0)).arg(value) );
 
         model->appendRow(_rowConstant);
-
 
         selectConstValue( model->index( model->rowCount()-1,1)  );
 
@@ -374,13 +335,14 @@ void EditorMeasures::clickAddConstValue()
             MEASURE_DB db;
             db.inc = true;
 
-
             db.constants.insert( _constant_names.at(0), _addConstantDialog.value( 1 )  );
             db.constants.insert( _constant_names.at(1), _addConstantDialog.value( 2 )  );
 
+
+
             db.columns.append( managerMeasures->device()->columnTitles(plot_type()) );
 
-            mMeasures.append( db );
+            measures_.append( db );
 
 
             QList<QStandardItem *> _rowConstant;
@@ -409,7 +371,7 @@ void EditorMeasures::saveMeasure()
     QMap<QString,QVariant> _info;
 
     // #TODO
-    _info.insert( "id", mID );
+    _info.insert( "id", id_ );
     _info.insert("name",name());
     _info.insert("author", "Malyugin Platon");
     _info.insert("type", plot_type());
@@ -439,7 +401,7 @@ void EditorMeasures::saveMeasure()
     _info.insert("settings",_settings);
 
     if(managerMeasures->saveMeasure( _info,measures() )){
-        mID = managerMeasures->measure_id();
+        id_ = managerMeasures->measure_id();
     }
 
     mMeasuresChanged = false;
@@ -476,14 +438,17 @@ void EditorMeasures::selectConstValue(QModelIndex index)
     int id = findDB(_constant);
 
     if(id == -1){
+        isSelectedConstant_ = false;
         return;
     }
+
+    isSelectedConstant_ = true;
 
     ui->tblMeasures->setEnabled( true );
 
     mCurrentMeasure = id;
 
-    MEASURE_DB _db = mMeasures.at(id);
+    MEASURE_DB _db = measures_.at(id);
 
 
     QStandardItemModel *model = static_cast<QStandardItemModel *>(ui->tblMeasures->model());
@@ -551,12 +516,12 @@ void EditorMeasures::importMeasures(){
             return;
         }
 
-        mMeasures = measure->measures( managerMeasures->device()->columnTitles(plot_type()));
-        mAuthor = measure->author();
-        mCreated = measure->created();
-        mChanged = measure->created();
+        measures_ = measure->measures( managerMeasures->device()->columnTitles(plot_type()));
+        author = measure->author();
+        created_ = measure->created();
+        changed_ = measure->created();
 
-        setInfo( "author", mAuthor );
+        setInfo( "author", author );
         setInfo( "created", measure->createdDate() );
 
 
@@ -690,45 +655,37 @@ double EditorMeasures::max(QVector<double> vect)
 
 QList<MEASURE_DB> EditorMeasures::measures()
 {
-    return mMeasures;
+    return measures_;
 }
 
-int EditorMeasures::findDB(QString constant_string)
-{
+int EditorMeasures::findDB(QString constantString ) {
+    int count_db = measures_.count();
+    int countConstant = constantString.split(",").count();
+    QMap<QString,double> constants;
 
-//    QMap<QString,double> _constants;
-
-
-
-
-//    QStringList _titles = managerMeasures->device()->constantTitles(plot_type());
-//    bool ok;
-//    double value;
-//    QStringList _constant_list = constant_string.split(",");
-//    foreach(QString _constant, _constant_list){
-//        foreach(QString _title,_titles){
-//            if(_constant.startsWith( _title )){
-//                value = _constant.remove(0,3).toDouble(&ok);
-//                if(ok){
-//                    _constants.insert( _title, value );
-//                }
-//                break;
-//            }
-//        }
-//    }
-
-
-    int count_db = mMeasures.count();
-    for(int i=0; i<count_db;i++){
-        QStringList _constStrings;
-        MEASURE_DB _db = mMeasures.at( i );
-        foreach(QString _const, _db.constants.keys()){
-            _constStrings << QString("%1=%2").arg(_const).arg( _db.constants.value(_const) );
+    foreach(QString temp, constantString.split(",")){
+        bool ok;
+        QString name = temp.split("=").at(0);
+        double value = temp.split("=").at(1).toDouble(&ok);
+        if(ok){
+            constants.insert(name,value);
         }
 
-        if(_constStrings.join(",").compare( constant_string, Qt::CaseInsensitive ) == 0){
+    }
+
+    for(int i=0; i<count_db;i++){
+        int countFound = 0;
+        MEASURE_DB _db = measures_.at( i );
+        foreach(QString _const, _db.constants.keys()){
+            if(constants.value(_const) !=  _db.constants.value(_const)){
+                break;
+            }
+            countFound++;
+        }
+        if( countFound == countConstant ){
             return i;
         }
+
 
     }
 
@@ -750,7 +707,7 @@ bool EditorMeasures::saveCurrentDB()
     int _row_count = model->rowCount(),
             _column_count = model->columnCount();
 
-    MEASURE_DB _db = mMeasures.at(mCurrentMeasure);
+    MEASURE_DB _db = measures_.at(mCurrentMeasure);
 
     _db.table.clear();
 
@@ -789,7 +746,7 @@ bool EditorMeasures::saveCurrentDB()
 
     }
 
-    mMeasures[mCurrentMeasure] = _db;
+    measures_[mCurrentMeasure] = _db;
 
 
     return true;
@@ -797,7 +754,7 @@ bool EditorMeasures::saveCurrentDB()
 
 void EditorMeasures::initialize()
 {
-
+    isSelectedConstant_ = false;
     mCurrentMeasure = -1;
 
     QStandardItemModel *modelMeasures = new QStandardItemModel(ui->tblMeasures),
@@ -807,11 +764,6 @@ void EditorMeasures::initialize()
     ui->tblMeasures->setModel( modelMeasures );
     ui->tblInfo->setModel( modelInfo );
     ui->tblConstants->setModel( modelConstants );
-
-
-
-
-
     ui->tblConstants->setEditTriggers( QAbstractItemView::NoEditTriggers );
 
     //TEST CASE
@@ -934,10 +886,10 @@ void EditorMeasures::updateMeasures()
 
     QStandardItemModel *model = static_cast<QStandardItemModel *>(ui->tblConstants->model());
     model->removeRows(0,model->rowCount());
-    int _constant_count = mMeasures.count();
+    int _constant_count = measures_.count();
     QStringList _values;
     for(int i=0; i < _constant_count;i++){
-        MEASURE_DB _db  = mMeasures.at(i);
+        MEASURE_DB _db  = measures_.at(i);
         _values.clear();
         foreach(QString _const,_db.constants.keys()){
             _values << QString("%1=%2").arg(_const).arg(_db.constants.value(_const));
@@ -1001,15 +953,15 @@ QModelIndex EditorMeasures::findItemFromConstants(QString _constant)
 
 void EditorMeasures::closeEvent(QCloseEvent *event)
 {
-    if(mMeasuresChanged){
-        if(maybeSave()){
-            saveMeasure();
-        }
-    }
+    saveMeasure();
+//    if(mMeasuresChanged){
+//        if(maybeSave()){
+//            saveMeasure();
+//        }
+//    }
 }
 
-bool EditorMeasures::maybeSave()
-{
+bool EditorMeasures::maybeSave(){
     if(QMessageBox::warning(this,trUtf8("Сохранение"),trUtf8("Сохранить перед закрытием"),QMessageBox::Ok, QMessageBox::Cancel  ) == QMessageBox::Ok){
         return true;
     }
@@ -1024,11 +976,11 @@ void EditorMeasures::loadInfo(){
     QStandardItemModel *modelInfo = static_cast<QStandardItemModel *>(ui->tblInfo->model());
     modelInfo->insertRows(0,3);
     modelInfo->setItem(0,0, new QStandardItem(trUtf8("Автор")));
-    modelInfo->setItem(0,1, new QStandardItem( mAuthor ));
+    modelInfo->setItem(0,1, new QStandardItem( author ));
     modelInfo->setData( modelInfo->index( 0,0 ), "author", Qt::UserRole );
 
     modelInfo->setItem(1,0, new QStandardItem(trUtf8("Дата")));
-    modelInfo->setItem(1,1, new QStandardItem( mCreated )  );
+    modelInfo->setItem(1,1, new QStandardItem( created_ )  );
      modelInfo->setData( modelInfo->index( 1,0 ), "date", Qt::UserRole );
 
     modelInfo->setItem(2,0, new QStandardItem(trUtf8("Сомнительное")));
@@ -1044,7 +996,7 @@ void EditorMeasures::loadInfo(){
         _items << new QStandardItem("L") << new QStandardItem("");
         modelInfo->appendRow(_items);
         modelInfo->setData( modelInfo->index( _index_row,0 ), "channel_l", Qt::UserRole );
-        if(mID != -1){
+        if(id_ != -1){
             modelInfo->setData( modelInfo->index( _index_row,1), mSettingMap.value("L","0.0") , Qt::DisplayRole );
         }
         _index_row++;
@@ -1053,7 +1005,7 @@ void EditorMeasures::loadInfo(){
         _items << new QStandardItem("W") << new QStandardItem("");
         modelInfo->appendRow(_items);
         modelInfo->setData( modelInfo->index( _index_row,0 ), "channel_w", Qt::UserRole );
-        if(mID != -1){
+        if(id_ != -1){
             modelInfo->setData( modelInfo->index( _index_row,1), mSettingMap.value("W","0.0") , Qt::DisplayRole );
         }
 
