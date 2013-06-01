@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogNewDevice</class>
+ <widget class="QDialog" name="DialogNewDevice">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>323</width>
+    <height>254</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Добавить устройство</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Название:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="lnName"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="labelType">
+     <property name="text">
+      <string>Тип:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="boxType"/>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="labelPolarity">
+     <property name="text">
+      <string>Полярность:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="boxPolarity"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="labelGround">
+     <property name="text">
+      <string>Земля:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="boxGround"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="widthChannelLabel">
+     <property name="text">
+      <string>Ширина:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="widthChannelLineEdit"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="lengthChannelLabel">
+     <property name="text">
+      <string>Длина:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="lengthChannelLineEdit"/>
+   </item>
+   <item row="6" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>150</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="6" column="1">
+    <widget class="QPushButton" name="btnAdd">
+     <property name="text">
+      <string>Добавить</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

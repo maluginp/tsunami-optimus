@@ -1,0 +1,118 @@
+Table: devices
+------------------------
+@id - device id
+@name - device name
+@device - device type
+@model_id
+@strategy_id
+@dataset_id
+@set_parameters_id
+@settings
+@created
+@changed
+------------------------
+
+Table: models
+-----------------------
+@id
+@name
+@device
+@created
+@author
+@changed0
+@user_defined
+@path
+
+
+Table: strategies
+-----------------
+@id
+@name
+@device_id // TYPE
+@dataset_id
+@measures
+
+Table: strategy_plots ( создаётся вместе с устройствам)
+----------------------
+@id
+@strategy_id
+@plot
+@enable
+
+
+
+
+
+Table: strategy_weights
+-----------------------
+@id
+@strategy_id
+@measure_id
+@data
+
+//
+<w>
+   <r>
+    <c n="sss" v="sss" />
+    <i x="0.1" w="0.1" />
+   </r>
+   <r>
+   </r>
+</w>
+//
+
+
+Table: datasets
+-----------------------
+@id
+@device_id
+@created
+@changed
+@name
+
+
+Table: measures
+-----------------------
+@id
+@dataset_id
+@name
+@author
+@plot_type
+@created
+@changed
+@data
+@helper
+@settings
+
+
+Table: parameter_sets
+---------------------
+@id
+@device_id
+@name
+@created
+@changed
+
+Table: parameter_set_templates
+------------------------------------------------
+@id
+@name
+@template
+@created
+@changed
+
+Table: parameters
+---------------------
+@id
+@parameter_set_id
+@name
+@initial
+@optimized
+@minimum
+@maximum
+@fixed
+@created
+@changed
+@include
+
+

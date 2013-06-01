@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/devices">
+        <file>images/bjt.png</file>
+        <file alias="bjt-npn">images/bjt-npn.png</file>
+        <file alias="bjt-pnp">images/bjt-pnp.png</file>
+        <file alias="jfet-n">images/jfet-n.png</file>
+        <file alias="jfet-p">images/jfet-p.png</file>
+        <file alias="nmos">images/nmos.png</file>
+        <file alias="pmos">images/pmos.png</file>
+    </qresource>
+</RCC>

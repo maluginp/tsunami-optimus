@@ -1,0 +1,22 @@
+<measure>
+    <info author="sss" date="1"/>
+    <columns>
+        <column name="col1"/>
+        <column name="col2"/>
+        <column name="col2"/>
+    </columns>
+    <db>
+        <constant name="" value="0.0"/>
+        <constant name="" value="0.0"/>
+        <constant name="" value="0.0"/>
+        <items>
+                <item value="0.0" />
+                <item value="0.0" />
+                <item value="0.0" />
+        </items>
+        <items>
+                <item value="0.0" />
+                <item value="0.0" />
+                <item value="0.0" />
+        </items>
+
