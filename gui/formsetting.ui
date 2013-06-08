@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="settingOptimisationTab">
       <attribute name="title">
@@ -195,6 +195,52 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Стиль</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Экспериментальные точки</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QSpinBox" name="measureWeightSpinBox"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="measureSymbolComboBox"/>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Симуляция</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QSpinBox" name="simulateSymbolComboBox"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="QComboBox" name="simulateWeightSpinBox"/>
+       </item>
+       <item row="4" column="1">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>174</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item row="1" column="0">
@@ -233,7 +279,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="errorButtonGroup"/>
   <buttongroup name="reportFormatButtonGroup"/>
+  <buttongroup name="errorButtonGroup"/>
  </buttongroups>
 </ui>

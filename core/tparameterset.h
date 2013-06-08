@@ -76,20 +76,7 @@ public:
         return parameterNames( false );
     }
 
-    QStringList parameterNames(bool all){
-        QStringList _list;
-        if(all){
-            return mParameters.keys();
-        }
-
-        foreach(QString _name,mParameters.keys()){
-            if(mParameters.value(_name).inc){
-                _list << _name;
-            }
-        }
-
-        return _list;
-    }
+    QStringList parameterNames(bool all);
 
 
 

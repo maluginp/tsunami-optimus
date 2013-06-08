@@ -19,12 +19,15 @@ public:
     };
 
     TTerminal(QString name);
+    TTerminal(const TTerminal &terminal);
+    TTerminal &operator =(const TTerminal &terminal);
+
     ~TTerminal();
     QString getName(){
-        return mName;
+        return name_;
     }
     QString name(){
-        return mName;
+        return name_;
     }
 
     double getMeasure( TERMINAL_TYPE type );
@@ -43,17 +46,13 @@ public:
 
 private:
 
+    QString name_;
+    TERMINAL_SOURCE type_;
+    double sourceCurrent_;
+    double sourceVoltage_;
 
-
-    QString mName;
-
-    TERMINAL_SOURCE mType;
-
-    double mCurrentSource;
-    double mVoltageSource;
-
-    double mCurrentMeasure;
-    double mVoltageMeasure;
+    double measureCurrent_;
+    double measureVoltage_;
 
 
 

@@ -20,7 +20,7 @@ class EditorMeasures : public QMainWindow
 public:
     explicit EditorMeasures(QString name,QString type, ManagerMeasures *manager, QWidget *parent = 0);
     explicit EditorMeasures(int measure_id,ManagerMeasures *manager, QWidget *parent = 0);
-    void setManager(ManagerMeasures *measure);
+    void setManager(ManagerMeasures* manager);
 
     bool Open(int measure_id);
 
@@ -67,8 +67,6 @@ private:
 
     void loadInfo();
 
-
-
     void setName(QString name);
     void setType(QString type);
     double min(QVector<double> vect);
@@ -88,7 +86,7 @@ private:
 
     void updateMeasures();
 
-    QCPGraph *mLastClickGraph;
+    QCPGraph* lastClickGraph_;
 
     QStandardItem *findItemCheckFromConstants( QString _constant );
     QModelIndex findItemFromConstants( QString _constant );

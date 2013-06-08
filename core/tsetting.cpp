@@ -33,3 +33,5 @@ bool TSetting::isEq(QString group, QString name, QString value)
 
     return false;
 }
+
+

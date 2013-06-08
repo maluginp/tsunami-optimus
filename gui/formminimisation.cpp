@@ -330,9 +330,12 @@ void FormMinimisation::replotGraphics(QMap<QString,double> parameters){
             _graph = plot->addGraph();
             _graph->setProperty( "type", "measure" );
             _graph->setProperty( "const", _plot.constant );
+
             _graph->setLineStyle(QCPGraph::lsNone);
+
             _graph->setScatterStyle(QCP::ssCross);
-            _graph->setScatterSize(3);
+//            _graph->setScatterSize(3);
+
             _graph->addData( _plot.measure_x, _plot.measure_y );
 
             // model

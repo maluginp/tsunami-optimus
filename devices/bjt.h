@@ -17,7 +17,6 @@ public:
     BJT(int device_id);
     ~BJT() {}
     void init();
-    void simulate(QString _plot_type);
     QVector< QPointF >  simulate(QString _plot_type, STEP_RANGE _range);
     QVector< QPointF >  getPlotData(QString _plot_type, STEP_RANGE _range);
     QPointF computeValue(QString plot_name, QMap<QString, double> values);
@@ -36,18 +35,6 @@ public:
 private:
     COMMONS mCommon;
 
-    double baseCurrent     ( double Vbe, double Vbc );
-    double collectorCurrent( double Vbe, double Vbc );
-
-    double VT(double T);
-
-    double q1s(double Vbe,double Vbc);
-    double q2s(double Vbe,double Vbc);
-    double NqB(double Vbe,double Vbc);
-    double Ifrw_dif(double Vbe);
-    double Irvr_dif(double Vbc);
-    double Irec_emitter(double Vbe);
-    double Irec_collector(double Vbc);
 };
 
 #endif // BJT_H

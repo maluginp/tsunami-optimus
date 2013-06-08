@@ -11,9 +11,6 @@ BJT::BJT(int device_id) : TDevice(device_id){
     addTerminal( "B" );
     addTerminal( "C" );
 
-
-
-
     QStringList _polarities;
 
     _polarities << "NPN" << "PNP";
@@ -26,15 +23,6 @@ BJT::BJT(int device_id) : TDevice(device_id){
     addImage( "NPN", ":/devices/bjt-npn" );
     addImage( "NPN", ":/devices/bjt-npn" );
 
-
-//    addImage( "NPN_E", ":/devices/bjt_npn_e" );
-//    addImage( "NPN_B", ":/devices/bjt_npn_b" );
-//    addImage( "NPN_C", ":/devices/bjt_npn_c" );
-
-//    addImage( "PNP_E", ":/devices/bjt_pnp_e" );
-//    addImage( "PNP_B", ":/devices/bjt_pnp_b" );
-//    addImage( "PNP_C", ":/devices/bjt_pnp_c" );
-
     setType( DEVICE_BJT );
 
 
@@ -45,110 +33,6 @@ BJT::BJT(int device_id) : TDevice(device_id){
 
 
 
-}
-
-void BJT::simulate(QString _plot_type){
-    double Ie_m,Ib_m,Ic_m,Ve,Vb,Vc,Vbe,Vbc,Ie,Ib,Ic;
-
-    Ie_m = terminal("E")->getMeasure( TTerminal::CURRENT );
-    // test: common_emiit
-
-    Ib_m = terminal("B")->getMeasure( TTerminal::CURRENT );
-    Ic_m = terminal("C")->getMeasure( TTerminal::CURRENT );
-
-    Ve = terminal("E")->getVoltage() - Ie_m * parameter("RE")->getDouble();
-    Vb = terminal("B")->getVoltage() - Ib_m * parameter("RB")->getDouble();
-    Vc = terminal("C")->getVoltage() - Ic_m * parameter("RC")->getDouble();
-
-
-
-
-    Vbe = Vb - Ve;
-    Vbc = Vb - Vc;
-
-    double Vth = VT(param("TNOM"));
-    double Ibf = param("IS")  * ( exp(Vbe/param("NF")/Vth) - 1.0 );
-    double Ile = param("ISE") * ( exp(Vbe/param("NE")/Vth) - 1.0 );
-    double Ibr = param("IS")  * ( exp(Vbc/param("NR")/Vth) - 1.0 );
-    double Ilc = param("ISC") * ( exp(Vbc/param("NC")/Vth) - 1.0 );
-    double Ibe = Ibf / param("BF") + Ile;
-    double Ibc = Ibr / param("BR") + Ilc;
-
-    double Ibf1 = (Ibe - Ile) * param("BF"),
-            Ibr1 = (Ibc - Ilc) * param("BR"),
-            KqBtem = 0.0;
-
-    if(param("IKF")){
-        KqBtem = 4.0 * ( Ibf1/param("IKF") );
-    }
-    if(param("IKR")){
-        KqBtem += 4.0 *( Ibr1/param("IKR") );
-    }
-
-    double tempVAF=0.0,tempVAR=0.0;
-    if(param("VAF")){
-        tempVAF = Vbc / param("VAF");
-    }
-
-    if(param("VAR")){
-        tempVAR = Vbe / param("VAR");
-    }
-
-    double KqB = 0.5 * (1.0/( 1.0 - tempVAF - tempVAR ) ) * (1.0 + KqBtem);
-    double Ice = (Ibf1-Ibr1) / KqB;
-    double ibc = 0.0;
-
-    double Cbcj = 0.0,Cbct=0.0,Cbej=0.0;
-    if( Vbc -param("FC")*param("VJC") > 0.0 ){
-        Cbcj = param("CJC")*pow(1.0-param("FC"),-1.0-param("MJC"))*(1.0 -param("FC")*(1.0+param("MJC"))+param("MJC")*Vbc/param("VJC"));
-    }else{
-        Cbcj = param("CJC")*pow( 1.0 - Vbc/param("VJC"),-param("MJC") );
-        Cbct = param("TR")*param("IS")*exp( Vbc/param("NR")/Vth )/(param("NR")*Vth);
-        ibc = 0.0;
-    }
-
-    if(Vbe-param("FC")*param("VJE") > 0.0){
-        Cbej=param("CJC")*pow( 1.0 -param("FC"),-1.0-param("MJC") )*(1.0-param("FC")*(1.0+param("MJE"))+param("MJE")*Vbe/param("VJE"));
-    }else{
-        Cbej = param("CJE")*pow(1.0-Vbe/param("VJE"),-param("MJE"));
-    }
-
-    double tZ = 1.0;
-    if(param("VTF")){
-        tZ = exp(0.69*Vbc/param("VTF"));
-    }
-    double Cbet = param("IS")*exp(Vbe/param("NF")/Vth)*param("TF")*(1.0+param("XTF")*tZ)/(param("NF")*Vth);
-    double ibe = 0.0;
-
-    double Tibe = Ibe+ibe,
-            Tibc = Ibc + ibc;
-
-    double rb1 = (param("RBM")+(param("RB")-param("RBM"))/KqB) / param("AREA");
-    double Vbx = Vbc + (Tibe+Tibc) * param("RB");
-
-    double Cbx;
-
-    if(Vbx-param("FC")*param("VJC") > 0.0){
-        Cbx = (1.0 - param("XCJC"))*param("CJC")*pow(1.0-param("FC"),-1.0-param("MJC"))*(1.0 - param("FC")*(1.0+param("MJC"))+param("MJC")*Vbx/param("VJC"));
-    }else{
-        Cbx = (1.0 - param("XCJC"))*param("CJC")*pow(1.0-Vbx/param("VJC"),-param("MJC"));
-    }
-    double ibx = 0.0;
-
-
-    Ic = Ice - Tibc - ibx;
-    Ib = ibx + Tibc+Tibe;
-    Ie = -(Ice+Tibe);
-
-    //    Ib = baseCurrent( Vbe, Vbc );
-    //    Ic = collectorCurrent( Vbe, Vbc );
-    //    Ie = Ic + Ib;
-
-
-    terminal( "E" )->setCurrent( Ie );
-    terminal( "B" )->setCurrent( Ib );
-    //    terminal( "B" )->setCurrent( Vbe*Vbe );
-    terminal( "C" )->setCurrent( Ic );
 }
 
 QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
@@ -247,8 +131,6 @@ QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
 
     CIRCUIT_ANALYZE_DC analyzeDc = { "", _range.start, _range.end, 0.01 };
 
-
-
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         // Id(Vg)| Vd = const
         net = TNet::createNet( "Vbe" );
@@ -318,9 +200,6 @@ void BJT::init(){
     MODEL_STRUCT _model = getModel();
 
     if(_model.name.compare( "Gummel-Poon", Qt::CaseInsensitive ) == 0){
-
-
-
         addParameter( "IS",  "", 1e-15  );
         addParameter( "BF",  "", 100.0  );
         addParameter( "BR",  "",  1.0 );
@@ -430,8 +309,6 @@ void BJT::init(){
         addParameter( "XTF", "Coefficient of TF bias dependence", 0.0);
         addParameter( "XVO", "Temperature exponent of VO", 0.0);
     }
-
-
 
 }
 
@@ -592,116 +469,3 @@ QPointF BJT::computeValue(QString plot_name, QMap<QString, double> values)
     return point;
 }
 
-
-double BJT::baseCurrent(double Vbe, double Vbc)
-{
-    double Ib = 0.0;
-
-    if(param("BF") != 0.0){
-        Ib += Ifrw_dif(Vbe)/param("BF");
-    }
-
-    if(param("BR") != 0.0){
-        Ib += Irvr_dif(Vbc)/param("BR");
-    }
-
-    Ib += Irec_emitter(Vbe) + Irec_collector(Vbc);
-
-    return Ib;
-}
-
-double BJT::collectorCurrent(double Vbe, double Vbc)
-{
-    double Ic = 0.0;
-
-    Ic = (Ifrw_dif(Vbe)-Irvr_dif(Vbc))/NqB(Vbe,Vbc);
-
-    if(param("BR") != 0){
-        Ic -=  Irvr_dif(Vbc)/param("BR");
-    }
-
-    Ic -= Irec_collector(Vbc);
-
-    return Ic;
-}
-
-double BJT::VT(double T)
-{
-    double Vt;
-    Vt = 8.6171e-5*(T+273.15);
-
-    return Vt;
-}
-
-double BJT::q1s(double Vbe, double Vbc)
-{
-    double q = 1;
-
-    if(param("VAR") != 0.0){
-        q -= Vbe/param("VAR");
-    }
-
-    if(param("VAF") != 0.0){
-        q -= Vbc/param("VAF");
-    }
-
-    q = 1/q;
-
-    return q;
-}
-
-double BJT::q2s(double Vbe, double Vbc)
-{
-    double q;
-    q = 0;
-
-    if(param("IKF") != 0.0){
-        q += Ifrw_dif(Vbe)/param("IKF");
-    }
-
-    if( param("IKR") != 0.0 ){
-        q += Irvr_dif(Vbc)/param("IKR");
-    }
-
-    return q;
-}
-
-double BJT::NqB(double Vbe, double Vbc)
-{
-    double N;
-    N = (q1s(Vbe,Vbc)/2)*(1+sqrt(1+4*q2s(Vbe,Vbc)));
-
-    return N;
-}
-
-double BJT::Ifrw_dif(double Vbe)
-{
-    double I;
-    I = param("IS")*( exp(Vbe/(param("NF")*VT(param("TNOM")))) - 1 );
-
-    return I;
-}
-
-double BJT::Irvr_dif(double Vbc)
-{
-    double I;
-    I = param("IS")*( exp(Vbc/(param("NR")*VT(param("TNOM")))) - 1 );
-
-    return I;
-}
-
-double BJT::Irec_emitter(double Vbe)
-{
-    double I;
-    I = param("ISE")*( exp(Vbe/(param("NE")*VT(param("TNOM")))) - 1 );
-
-    return I;
-}
-
-double BJT::Irec_collector(double Vbc)
-{
-    double I;
-    I = param("ISC")*( exp(Vbc/(param("NC")*VT(param("TNOM")))) - 1 );
-
-    return I;
-}

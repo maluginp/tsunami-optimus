@@ -11,6 +11,9 @@ public:
     static QVariant value(QString group, QString name);
     static bool isEq( QString group, QString name, QString value );
 
+
+
+
 };
 
 #endif // TSETTING_H

@@ -10,8 +10,8 @@
 
 EditorMeasures::EditorMeasures(QString name,QString type, ManagerMeasures *manager,QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::EditorMeasures)
-{
+    ui(new Ui::EditorMeasures){
+
     ui->setupUi(this);
 
     setName(name);
@@ -23,18 +23,6 @@ EditorMeasures::EditorMeasures(QString name,QString type, ManagerMeasures *manag
 
     // plots
     loadInfo();
-
-
-//    QStandardItemModel *modelInfo = static_cast<QStandardItemModel *>(ui->tblInfo->model());
-//    modelInfo->insertRows(0,3);
-//    modelInfo->setItem(0,0, new QStandardItem(trUtf8("Автор")));
-//    modelInfo->setItem(0,1, new QStandardItem(trUtf8("Восток")));
-//    modelInfo->setItem(1,0, new QStandardItem(trUtf8("Дата")));
-//    modelInfo->setItem(1,1, new QStandardItem( QDate::currentDate().toString("dd.MM.yyyy") )  );
-//    modelInfo->setItem(2,0, new QStandardItem(trUtf8("Сомнительное")));
-
-
-
 
 
 }
@@ -57,23 +45,8 @@ EditorMeasures::EditorMeasures(int measure_id,ManagerMeasures *manager, QWidget 
     replotGraphics();
 }
 
-void EditorMeasures::setManager(ManagerMeasures *measure)
-{
-    managerMeasures = measure;
-
-    QStringList _plots = managerMeasures->device()->plots().keys();
-
-
-
-
-
-
-    //    ui->tabGraphics->clear();
-    //    foreach(QString _plot, _plots){
-    //        ui->boxPlot->addItem( _plot );
-    //    }
-
-    //    replotGraphics();
+void EditorMeasures::setManager(ManagerMeasures* manager){
+    managerMeasures = manager;
 }
 
 bool EditorMeasures::Open(int measure_id)
@@ -93,11 +66,6 @@ bool EditorMeasures::Open(int measure_id)
     isSelectedConstant_ = false;
 
     delete measure;
-
-
-
-
-
     return true;
 }
 
@@ -621,11 +589,11 @@ void EditorMeasures::plottableClick(QCPAbstractPlottable *plot, QMouseEvent *mou
 
 
     }else if(mouse->button() == Qt::LeftButton){
-        if(mLastClickGraph == _graph){
+        if(lastClickGraph_ == _graph){
             selectConstValue(findItemFromConstants( _graph->property("const").toString() ));
 
         }else{
-            mLastClickGraph = _graph;
+            lastClickGraph_ = _graph;
         }
 
 

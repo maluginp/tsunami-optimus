@@ -16,7 +16,7 @@ MOSFET::MOSFET(int device_id) : TDevice(device_id)
 
     setType( DEVICE_MOSFET );
 
-    addPlot( "in", trUtf8("Входная ВАХ"), "Vg", "Id" );
+    addPlot( "in", trUtf8("Передаточная ВАХ"), "Vg", "Id" );
     addPlot( "out", trUtf8("Выходная ВАХ"), "Vd", "Id" );
 
 
@@ -316,11 +316,9 @@ QPointF MOSFET::computeValue(QString plot_name, QMap<QString, double> values){
     QPointF point;
 
     if( plot_name.compare("in",Qt::CaseInsensitive) == 0 ){
-        point.setX( values.value( "Vg",0.0 )  );
-        point.setY( values.value( "Id",0.0 )  );
+        point = QPointF(values.value( "Vg",0.0 ),values.value( "Id",0.0 ) );
     } else if( plot_name.compare("out",Qt::CaseInsensitive) == 0 ){
-        point.setX( values.value( "Vd",0.0 )  );
-        point.setY( values.value( "Id",0.0 )  );
+        point = QPointF(values.value( "Vd",0.0 ),values.value( "Id",0.0 ) );
     }else{
         point = QPointF(INFINITY,INFINITY);
     }

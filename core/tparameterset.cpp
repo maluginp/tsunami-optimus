@@ -163,6 +163,21 @@ QMap<QString, double> TParameterSet::initials(){
     return _initial;
 }
 
+QStringList TParameterSet::parameterNames(bool all){
+    QStringList _list;
+    if(all){
+        return mParameters.keys();
+    }
+
+    foreach(QString _name,mParameters.keys()){
+        if(mParameters.value(_name).inc){
+            _list << _name;
+        }
+    }
+
+    return _list;
+}
+
 void TParameterSet::addParameter(QString name,double initial, double min, double max, bool fixed){
 
     PARAMETER_SET _param;
@@ -194,8 +209,7 @@ void TParameterSet::setParameter(QString name, double initial, double min, doubl
     }
 }
 
-void TParameterSet::setParameter(QString name, PARAMETER_SET set)
-{
+void TParameterSet::setParameter(QString name, PARAMETER_SET set){
     mParameters.insert( name,set);
 }
 
@@ -273,14 +287,11 @@ bool TParameterSet::Save(){
     return true;
 }
 
-void TParameterSet::setValue(QMap<QString, double> values)
-{
+void TParameterSet::setValue(QMap<QString, double> values){
     foreach(QString _name,values.keys()){
-
         if(mParameters.contains(_name)){
             mParameters[_name].initial = values.value(_name);
         }
-
     }
 }
 
@@ -297,8 +308,7 @@ bool TParameterSet::exists(QString name){
     return _exists;
 }
 
-QList<int> TParameterSet::listParameterSetByDeviceId(int device_id)
-{
+QList<int> TParameterSet::listParameterSetByDeviceId(int device_id){
     QList<int> _list;
     TDBLayer *dbLayer = TDBLayer::getInstance();
     dbLayer->bindQuery("SELECT id FROM parameter_sets WHERE device_id=:id")
