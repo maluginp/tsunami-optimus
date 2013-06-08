@@ -202,7 +202,7 @@ void EditorMeasures::changeDataConstant(QStandardItem *item)
 
 void EditorMeasures::replotGraphics()
 {
-    QStandardItemModel *model = static_cast<QStandardItemModel *>(ui->tblMeasures->model());
+    QStandardItemModel *model = dynamic_cast<QStandardItemModel *>(ui->tblMeasures->model());
     QMap<QString,double> values;
 
     QStringList _labels;
@@ -249,11 +249,10 @@ void EditorMeasures::replotGraphics()
                         values.insert( _labels.at(_item), _row.row.at(_item));
                     }
 
-                    QMap<TDevice::Axis,double> _values = managerMeasures->device()->computeValue(_name, values);
+                    QPointF point = managerMeasures->device()->computeValue(_name, values);
 
-                    axisX.append( _values[TDevice::AXIS_X] );
-                    axisY.append( _values[TDevice::AXIS_Y] );
-
+                    axisX.append( point.x() );
+                    axisY.append( point.y() );
 
                 }
 
@@ -537,7 +536,7 @@ void EditorMeasures::importMeasures(){
 void EditorMeasures::closeEditor(){
     delete managerMeasures;
     measures_.clear();
-    close();
+    emit close();
 }
 
 void EditorMeasures::copyToClipboard()
@@ -563,6 +562,7 @@ void EditorMeasures::clickPlotter(QMouseEvent *event)
 {
 
     ViewerPlot plot(this);
+
 
     QCustomPlot *_plot = static_cast<QCustomPlot *>(ui->tabGraphics->widget( ui->tabGraphics->currentIndex() ));
     plot.setPlot( _plot );
@@ -836,7 +836,7 @@ void EditorMeasures::initialize()
     connect(ui->tblConstants,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(selectConstValue(QModelIndex)));
     connect(modelConstants,SIGNAL(itemChanged(QStandardItem*)),this,SLOT(changeDataConstant(QStandardItem*)));
     connect(ui->btnSave,SIGNAL(clicked()),this,SLOT(saveMeasure()));
-    connect(ui->btnClose,SIGNAL(clicked()),this,SLOT(closeEditor()));
+    connect(ui->btnClose,SIGNAL(clicked()),this,SLOT(close()));
     connect(ui->actionImport,SIGNAL(triggered()),this,SLOT(importMeasures()));
 
     connect(ui->actionCopyToClipboard,SIGNAL(triggered()),this,SLOT(copyToClipboard()));
@@ -957,15 +957,17 @@ QModelIndex EditorMeasures::findItemFromConstants(QString _constant)
     return model->index(-1,-1);
 }
 
-void EditorMeasures::closeEvent(QCloseEvent *event)
-{
-    saveMeasure();
-//    if(mMeasuresChanged){
-//        if(maybeSave()){
-//            saveMeasure();
-//        }
+//void EditorMeasures::closeEvent(QCloseEvent *event)
+//{
+//    if(event->type() == QEvent::Close){
+//        saveMeasure();
 //    }
-}
+////    if(mMeasuresChanged){
+////        if(maybeSave()){
+////            saveMeasure();
+////        }
+////    }
+//}
 
 bool EditorMeasures::maybeSave(){
     if(QMessageBox::warning(this,trUtf8("Сохранение"),trUtf8("Сохранить перед закрытием"),QMessageBox::Ok, QMessageBox::Cancel  ) == QMessageBox::Ok){

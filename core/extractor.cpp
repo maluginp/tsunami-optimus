@@ -105,7 +105,7 @@ double Extractor::computeFunctionError(){
 
     QMutexLocker locker(&mutexFunctionError_);
     double _error = 0.0;
-    QVector< QMap<TDevice::Axis,double> > _spiceValues;
+    QVector< QPointF > _spiceValues;
     strategy()->beginDb();
     while( strategy()->isNextDb() ){
         double error_db = 0.0;
@@ -139,15 +139,15 @@ double Extractor::computeFunctionError(){
                 _values.insert( _db.columns.at(col), _row.at(col) );
             }
 
-            QMap<TDevice::Axis, double> _measureValues, _modelValues;
+            QPointF pointMeasure, pointSimulate;
 
-            _measureValues = device()->computeValue(strategy()->typeDb(), _values );
+            pointMeasure = device()->computeValue(strategy()->typeDb(), _values );
 
             bool _findValue=false;
             int _countSpiceValues = _spiceValues.count();
             for(int i=0; i < _countSpiceValues;i++){
-                if(_spiceValues.at(i).value(TDevice::AXIS_X) == _measureValues.value( TDevice::AXIS_X )){
-                    _modelValues = _spiceValues.at(i);
+                if(_spiceValues.at(i).x() == pointMeasure.x() ){
+                    pointSimulate = _spiceValues.at(i);
                     _findValue = true;
                     break;
                 }
@@ -161,17 +161,17 @@ double Extractor::computeFunctionError(){
             double _error_tmp=0.0;
             if( typeError_ == ERROR_ABSOLUTE ){
                 //
-                _temp   = _modelValues.value( TDevice::AXIS_Y ) - _measureValues.value( TDevice::AXIS_Y );
-                _temp  /= strategy()->weight( _modelValues.value( TDevice::AXIS_X ));
+                _temp   = pointSimulate.y() - pointMeasure.y();
+                _temp  /= strategy()->weight( pointSimulate.x() );
                 _error_tmp = (_temp * _temp);
 
                 error_db += _error_tmp;
                 _error += (_temp * _temp);
             }else{
-                _temp   = MAX_VALUE( fabs(_modelValues.value( TDevice::AXIS_Y )), fabs(_measureValues.value(TDevice::AXIS_Y)) );
+                _temp   = MAX_VALUE( fabs(pointSimulate.y()), fabs(pointMeasure.y()) );
                 if(_temp != 0.0){
-                    _temp   = (fabs(_modelValues.value( TDevice::AXIS_Y )) - fabs(_measureValues.value( TDevice::AXIS_Y )))/_temp;
-                    _temp  /= strategy()->weight( _modelValues.value( TDevice::AXIS_X ));
+                    _temp   = (fabs(pointSimulate.y())) - fabs(pointMeasure.y())/_temp;
+                    _temp  /= strategy()->weight( pointSimulate.x() );
                     _error_tmp = (_temp * _temp);
                     error_db += _error_tmp;
                     _error += (_temp * _temp);

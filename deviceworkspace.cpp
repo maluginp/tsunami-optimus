@@ -61,7 +61,7 @@ void DeviceWorkspace::showDialogOpenDevice(){
             return;
         }
 
-        setWindowTitle( device()->name() +trUtf8(" - � абочая область") );
+        setWindowTitle( device()->name() +trUtf8(" - Рабочая область") );
         QString _polarity_name = device()->polarityName();
         ui->polarityTitleLabel->setText( _polarity_name );
         QString _img = device()->image();

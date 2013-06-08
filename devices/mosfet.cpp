@@ -125,7 +125,7 @@ QString MOSFET::image()
 
 
 
-QVector< QMap<TDevice::Axis, double> > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
+QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
 
     QMutexLocker locker(&mutexSimulate);
 
@@ -137,9 +137,9 @@ QVector< QMap<TDevice::Axis, double> > MOSFET::simulate(QString _plot_type, STEP
     Vbs = terminal("B")->getVoltage() - terminal("S")->getVoltage();
 
 
-    MODEL_STRUCT _model = getModel();
+    MODEL_STRUCT model = getModel();
 
-   double L = setting( "L" ).toDouble(),
+    double L = setting( "L" ).toDouble(),
             W = setting( "W" ).toDouble();
 
     TCircuit* circuit = new TCircuit("MOSFET simulate","mos.cir",NGSPICE_PATH);
@@ -176,121 +176,38 @@ QVector< QMap<TDevice::Axis, double> > MOSFET::simulate(QString _plot_type, STEP
     circuit->setAnalyze(dcAnalyze);
     circuit->addPrint(3,"dc","i(Vds)","i(Vbs)");
 
-    CIRCUIT_MODEL circuitModel = {"mos", "NMOS"};
+    CIRCUIT_MODEL circuitModel = {"mos", "NMOS",0};
 
-//    if( polarity() == TDevice::POLARITY_N ){
-//        _circuit.append( ".model mos NMOS\n" );
-//    }else if( polarity() == TDevice::POLARITY_P ) {
-//        _circuit.append( ".model mos PMOS\n" );
-//    }else{
-//        _circuit.append( ".model mos NMOS\n" );
-//    }
+    if(polarity() == TDevice::POLARITY_P){
+        circuitModel.polarity[0] = 'P';
+    }
 
+    circuitModel.level = getLevel( &model.name );
+    foreach( TParameter *param,getParameters() ){
+        circuitModel.parameters.insert(param->name(),param->value());
+    }
 
-//    if(_model.name.compare( "BSIM3v3", Qt::CaseInsensitive ) == 0){
-//        _circuit.append("+ LEVEL=8\n");
-//    } else if( _model.name.compare("LEVEL2", Qt::CaseInsensitive) == 0 ){
-//        _circuit.append("+ LEVEL=2\n");
-//    } else if( _model.name.compare("LEVEL3", Qt::CaseInsensitive) == 0){
-//        _circuit.append("+ LEVEL=3\n");
-//    }
+    circuit->addModel( circuitModel );
 
-//    foreach( TParameter *param,getParameters() ){
-//        if(param->isInclude()){
-//            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-//        }
-//    }
+    QVector<QPointF> simulatedData;
 
+    if(!circuit->simulate()){
+        TSLog( "Simulated data" );
+        return simulatedData;
+    }
 
-//    _circuit.append( "\n.end" );
+    QVector< QVector<double> > results = circuit->getResult();
+    for(int i=0; i < results.count(); i++){
+        QVector<double> row = results.at(i);
+        QPointF point( row.at(0), row.at(1) );
+        simulatedData << point;
+    }
 
-//    int _writed = cirFile.write( _circuit );
-//    if(_writed == -1){
-//        qDebug() << "sss";
-//        //error;
-//        //    return;
-//    }
-//    cirFile.flush();
-//    cirFile.close();
-
-//    if(!cirFile.exists()){
-//        qDebug() << "ss";
-//    }
-
-//    proc->start( spicePath, spiceArg );
-//    if(!proc->waitForStarted()){
-//        qDebug() << "sss";
-//    }
-
-//    if(!proc->waitForFinished()){
-//        qDebug() << "sss1";
-//    }
-
-//    if(!outFile.open( QIODevice::ReadOnly )){
-//        qDebug() << outFile.errorString();
-
-////        delete proc;
-//        //    return;
-//    }
-
-//    QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-//    double Ids=0.0,Ibs=0.0,V;
-//    while(!outFile.atEnd()){
-//        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-//        if(_columns.count() == 4){
-//            QMap<TDevice::Axis,double> _map;
-//            V = _columns.at(1).toDouble();
-//            Ibs = _columns.at(3).toDouble();
-//            Ids = _columns.at(2).toDouble();
-
-//            _map.insert( AXIS_X, V );
-//            _map.insert( AXIS_Y, -Ids);
-
-//            _vec.append(_map);
-
-//        }
-//    }
-
-//    outFile.close();
-
-////    outFile.remove();
-////    cirFile.remove();
-
-////    proc->close();
-////    if(proc->isOpen()){
-////        qDebug() << "Proc open";
-////    }
-//    try{
-//        delete proc;
-//    }catch(...){
-//        //
-//    }
-
-    QVector< > _vec;
-
-    return _vec;
+    return simulatedData;
 }
 
-QVector<QMap<TDevice::Axis, double> > MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range)
-{
+QVector<QPointF> MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range){
     QMutexLocker locker(&mutexSimulate);
-    QProcess *proc = new QProcess();
-
-    QString spicePath( NGSPICE_PATH );
-    QStringList spiceArg;
-    spiceArg << "-b" << "-omosfet_plot.out" << "mosfet_plot.cir";
-
-    QFile cirFile( "mosfet_plot.cir" ),
-            outFile("mosfet_plot.out");
-
-
-    if(!cirFile.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate )){
-
-        delete proc;
-        //    return;
-    }
     // Жёстко земля S
     double Vds = 0.0, Vgs = 0.0 ,Vbs = 0.0;
 
@@ -299,128 +216,73 @@ QVector<QMap<TDevice::Axis, double> > MOSFET::getPlotData(QString _plot_type, ST
     Vbs = terminal("B")->getVoltage() - terminal("S")->getVoltage();
 
 
-    MODEL_STRUCT _model = getModel();
-
-    QByteArray _circuit("");
-
+    MODEL_STRUCT model = getModel();
 
     double L = setting( "L" ).toDouble(),
             W = setting( "W" ).toDouble();
 
-    _circuit.append( QString("Tsunami\n\n"));
-    _circuit.append( QString("m1 2 1 0 3 mos L=%1 W=%2\n").arg(L).arg(W) );
-    _circuit.append( QString("Vds 2 0 %1\n").arg(Vds) );
-    _circuit.append( QString("Vgs 1 0 %1\n").arg(Vgs) );
-    _circuit.append( QString("Vbs 3 0 %1\n").arg(Vbs) );
+    TCircuit* circuit = new TCircuit("MOSFET simulate","mosp.cir",NGSPICE_PATH);
+    TNet* net;
+    QVector<QVariant> values;
 
+    values << "mos" << QString("L=%1").arg(L) << QString("W=%1").arg(W);
+    net = TNet::createNet( "m1" );
+    net->setTerminals( 4, 2, 1, 0, 3 );
+    net->addValue( values );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vds" );
+    net->setTerminals(2, 2, 0 );
+    net->addValue( Vds );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vgs" );
+    net->setTerminals(2, 1, 0 );
+    net->addValue( Vgs );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vbs" );
+    net->setTerminals(2, 3, 0 );
+    net->addValue( Vbs );
+    circuit->addNet( net );
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
-        // Id(Vg)| Vd = const
-
-        _circuit.append( QString(".dc Vgs %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
+        strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
-        _circuit.append( QString(".dc Vds %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-    }else{
-        // error;
-    }
-    _circuit.append( ".options noacct nopage\n" );
-    _circuit.append( QString(".print dc i(Vds) i(Vbs)\n") );
-
-    // #TODO: fix
-    setPolarity(TDevice::POLARITY_N);
-
-    if( polarity() == TDevice::POLARITY_N ){
-        _circuit.append( ".model mos NMOS\n" );
-    }else if( polarity() == TDevice::POLARITY_P ) {
-        _circuit.append( ".model mos PMOS\n" );
-    }else{
-        _circuit.append( ".model mos NMOS\n" );
+        strcpy( dcAnalyze.name, "Vds" );
     }
 
+    circuit->setAnalyze(dcAnalyze);
+    circuit->addPrint(3,"dc","i(Vds)","i(Vbs)");
 
-    if(_model.name.compare( "BSIM3v3", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=8\n");
-    } else if( _model.name.compare("LEVEL2", Qt::CaseInsensitive) == 0 ){
-        _circuit.append("+ LEVEL=2\n");
-    } else if( _model.name.compare("LEVEL3", Qt::CaseInsensitive) == 0){
-        _circuit.append("+ LEVEL=3\n");
+    CIRCUIT_MODEL circuitModel = {"mos", "NMOS",0};
+
+    if(polarity() == TDevice::POLARITY_P){
+        circuitModel.polarity[0] = 'P';
     }
 
+    circuitModel.level = getLevel( &model.name );
     foreach( TParameter *param,getParameters() ){
-        if(param->isInclude()){
-            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-        }
+        circuitModel.parameters.insert(param->name(),param->value());
     }
 
+    circuit->addModel( circuitModel );
 
-    _circuit.append( "\n.end" );
+    QVector<QPointF> simulatedData;
 
-    int _writed = cirFile.write( _circuit );
-    if(_writed == -1){
-        qDebug() << "sss";
-        //error;
-        //    return;
-    }
-    cirFile.flush();
-    cirFile.close();
-
-    if(!cirFile.exists()){
-        qDebug() << "ss";
+    if(!circuit->simulate()){
+        TSLog( "Simulated data" );
+        return simulatedData;
     }
 
-    proc->start( spicePath, spiceArg );
-    if(!proc->waitForStarted()){
-        qDebug() << "sss";
+    QVector< QVector<double> > results = circuit->getResult();
+    for(int i=0; i < results.count(); i++){
+        QVector<double> row = results.at(i);
+        QPointF point( row.at(0), row.at(1) );
+        simulatedData << point;
     }
 
-    if(!proc->waitForFinished()){
-        qDebug() << "sss1";
-    }
-
-    if(!outFile.open( QIODevice::ReadOnly )){
-        qDebug() << outFile.errorString();
-
-//        delete proc;
-        //    return;
-    }
-
-    QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-    double Ids=0.0,Ibs=0.0,V;
-    while(!outFile.atEnd()){
-        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-        if(_columns.count() == 4){
-            QMap<TDevice::Axis,double> _map;
-            V = _columns.at(1).toDouble();
-            Ibs = _columns.at(3).toDouble();
-            Ids = _columns.at(2).toDouble();
-
-            _map.insert( AXIS_X, V );
-            _map.insert( AXIS_Y, -Ids);
-
-            _vec.append(_map);
-
-        }
-    }
-
-    outFile.close();
-
-//    outFile.remove();
-//    cirFile.remove();
-
-//    proc->close();
-//    if(proc->isOpen()){
-//        qDebug() << "Proc open";
-//    }
-    try{
-        delete proc;
-    }catch(...){
-        //
-    }
-
-
-
-    return _vec;
+    return simulatedData;
 }
 
 QStringList MOSFET::constantTitles(QString plot_type){
@@ -449,21 +311,19 @@ QStringList MOSFET::columnTitles(QString plot_type){
 
 }
 
-QMap<TDevice::Axis, double> MOSFET::computeValue(QString plot_name, QMap<QString, double> values){
+QPointF MOSFET::computeValue(QString plot_name, QMap<QString, double> values){
 
-    QMap<TDevice::Axis, double> _point;
+    QPointF point;
 
     if( plot_name.compare("in",Qt::CaseInsensitive) == 0 ){
-        _point.insert( TDevice::AXIS_X, values.value( "Vg",0.0 ) );
-        _point.insert( TDevice::AXIS_Y, values.value( "Id",0.0 ) );
+        point.setX( values.value( "Vg",0.0 )  );
+        point.setY( values.value( "Id",0.0 )  );
     } else if( plot_name.compare("out",Qt::CaseInsensitive) == 0 ){
-        _point.insert( TDevice::AXIS_X, values.value( "Vd",0.0 ) );
-        _point.insert( TDevice::AXIS_Y, values.value( "Id",0.0 ) );
+        point.setX( values.value( "Vd",0.0 )  );
+        point.setY( values.value( "Id",0.0 )  );
     }else{
-        _point.insert( TDevice::AXIS_X , 0 );
-        _point.insert( TDevice::AXIS_Y , 0 );
-
+        point = QPointF(INFINITY,INFINITY);
     }
 
-    return _point;
+    return point;
 }

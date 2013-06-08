@@ -1,7 +1,7 @@
 #include "bjt.h"
 
 #include "core/tparameter.h"
-
+#include "core/tcircuit.h"
 
 BJT::BJT(int device_id) : TDevice(device_id){
 
@@ -151,301 +151,150 @@ void BJT::simulate(QString _plot_type){
     terminal( "C" )->setCurrent( Ic );
 }
 
-QVector<QMap<TDevice::Axis, double> > BJT::simulate(QString _plot_type, STEP_RANGE _range){
+QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
 
     QMutexLocker locker(&mutexSimulate);
-    QProcess *proc = new QProcess(0);
 
-    QString spicePath( NGSPICE_PATH);
-    QStringList spiceArg;
-    spiceArg << "-b" << "-objt_sim.out" << "bjt_sim.cir";
+    TCircuit* circuit = new TCircuit("BJT simulate","bjt.cir",NGSPICE_PATH);
+    TNet* net;
 
-    QFile cirFile( "bjt_sim.cir" ),
-            outFile("bjt_sim.out");
-
-
-    if(!cirFile.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate )){
-
-        delete proc;
-        //    return;
-    }
     // Жёстко земля E
     double Vbe = 0.0, Vce=0.0, Ib = 0.0;
-
     Vbe = terminal("B")->getVoltage() - terminal("E")->getVoltage();
     Vce = terminal("C")->getVoltage() - terminal("E")->getVoltage();
-
     Ib = terminal("B")->getCurrent();
 
-    MODEL_STRUCT _model = getModel();
+    net = TNet::createNet( "q1" );
+    net->setTerminals(3, 2, 1, 0 );
+    net->addValue( "bjt" );
+    circuit->addNet( net );
+    net = TNet::createNet( "Vce" );
+    net->setTerminals(2, 2, 0 );
+    net->addValue( Vce );
+    circuit->addNet( net );
 
-    QByteArray _circuit("");
+    CIRCUIT_ANALYZE_DC analyzeDc = { "", _range.start, _range.end, 0.01 };
 
-
-    _circuit.append( QString("Tsunami\n\n"));
-    _circuit.append( QString("q1 2 1 0 qmodel\n"));
 
 
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         // Id(Vg)| Vd = const
-        _circuit.append( QString("Vbe 1 0 %1\n").arg(Vbe) );
-        _circuit.append( QString("Vce 2 0 %1\n").arg(Vce) );
-        _circuit.append( QString(".dc Vbe %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-        _circuit.append( QString(".print dc i(Vbe)\n") );
+        net = TNet::createNet( "Vbe" );
+        net->setTerminals(2, 1, 0 );
+        net->addValue( Vbe );
+        circuit->addNet( net );
+        ::strcpy( analyzeDc.name, "Vbe");
 
+        circuit->addPrint(2, "dc", "i(Vbe)" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
-        _circuit.append( QString("Ib 0 1 %1\n").arg(Ib) );
-        _circuit.append( QString("Vce 2 0 %1\n").arg(Vce) );
-        _circuit.append( QString(".dc Vce %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-        _circuit.append( QString(".print dc i(Vce)\n") );
-    }else if(_plot_type.compare( "betta", Qt::CaseInsensitive )==0){
-        //        _circuit.append()
-        // error;
+        net = TNet::createNet( "Ib" );
+        net->setTerminals(2, 0, 1 );
+        net->addValue( Ib );
+        circuit->addNet( net );
+        ::strcpy( analyzeDc.name, "Vce");
+        circuit->addPrint(2, "dc", "i(Vce)" );
     }
+    circuit->setAnalyze( analyzeDc );
 
-
-
-    _circuit.append( ".options noacct nopage\n" );
-    // #TODO: fix
-    setPolarity("NPN");
-
+    CIRCUIT_MODEL circuitModel = {"bjt", "NPN",0};
     if( polarity() == TDevice::POLARITY_P ){
-        _circuit.append( ".model qmodel PNP\n" );
-    }else if( polarity() == TDevice::POLARITY_N ) {
-        _circuit.append( ".model qmodel NPN\n" );
-    }else{
-        _circuit.append( ".model qmodel PNP\n" );
+        strcpy(circuitModel.polarity,"PNP");
     }
 
+    MODEL_STRUCT model = getModel();
+    circuitModel.level = getLevel( &model.name );
 
-    if(_model.name.compare( "Gummel-Poon", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=1\n");
-    }else if(_model.name.compare( "VBIC", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=4\n");
-    }
     foreach( TParameter *param,getParameters() ){
-        if(param->isInclude()){
-            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-        }
+        circuitModel.parameters.insert(param->name(),param->value());
     }
 
+    QVector<QPointF> simulatedData;
 
-    _circuit.append( "\n.end" );
-
-    int _writed = cirFile.write( _circuit );
-    if(_writed == -1){
-        qDebug() << "sss";
-        //error;
-        //    return;
-    }
-    cirFile.flush();
-    cirFile.close();
-
-    if(!cirFile.exists()){
-        qDebug() << "ss";
+    if(!circuit->simulate()){
+        TSLog( "Simulated data" );
+        return simulatedData;
     }
 
-    proc->start( spicePath, spiceArg );
-    if(!proc->waitForStarted()){
-        qDebug() << "sss";
+    QVector< QVector<double> > results = circuit->getResult();
+    for(int i=0; i < results.count(); i++){
+        QVector<double> row = results.at(i);
+        QPointF point( row.at(0), row.at(1) );
+        simulatedData << point;
     }
 
-    if(!proc->waitForFinished()){
-        qDebug() << "sss1";
-    }
-
-    if(!outFile.open( QIODevice::ReadOnly )){
-        qDebug() << outFile.errorString();
-
-        //        delete proc;
-        //    return;
-    }
-
-    QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-    double I=0.0,V=0.0;
-    while(!outFile.atEnd()){
-        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-        if(_columns.count() == 3){
-            QMap<TDevice::Axis,double> _map;
-            V = _columns.at(1).toDouble();
-            I = _columns.at(2).toDouble();
-
-            _map.insert( AXIS_X, V );
-            _map.insert( AXIS_Y, -I);
-
-            _vec.append(_map);
-
-        }
-    }
-
-    outFile.close();
-
-    //    outFile.remove();
-    //    cirFile.remove();
-
-    //    proc->close();
-    //    if(proc->isOpen()){
-    //        qDebug() << "Proc open";
-    //    }
-    try{
-        delete proc;
-    }catch(...){
-        //
-    }
-
-
-
-    return _vec;
-
+    return simulatedData;
 }
 
-QVector<QMap<TDevice::Axis, double> > BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
-{QMutexLocker locker(&mutexSimulate);
-    QProcess *proc = new QProcess(this);
+QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
+{   QMutexLocker locker(&mutexSimulate);
+    TCircuit* circuit = new TCircuit("BJT simulate","bjtp.cir",NGSPICE_PATH);
+    TNet* net;
 
-    QString spicePath( NGSPICE_PATH );
-    QStringList spiceArg;
-    spiceArg << "-b" << "-objt_plot.out" << "bjt_plot.cir";
-
-    QFile cirFile( "bjt_plot.cir" ),
-            outFile("bjt_plot.out");
-
-
-    if(!cirFile.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate )){
-
-        delete proc;
-        //    return;
-    }
     // Жёстко земля E
-    double Vbe = 0.0, Vce=0.0, Ib=0.0;
-
+    double Vbe = 0.0, Vce=0.0, Ib = 0.0;
     Vbe = terminal("B")->getVoltage() - terminal("E")->getVoltage();
     Vce = terminal("C")->getVoltage() - terminal("E")->getVoltage();
     Ib = terminal("B")->getCurrent();
 
-    MODEL_STRUCT _model = getModel();
+    net = TNet::createNet( "q1" );
+    net->setTerminals(3, 2, 1, 0 );
+    net->addValue( "bjt" );
+    circuit->addNet( net );
+    net = TNet::createNet( "Vce" );
+    net->setTerminals(2, 2, 0 );
+    net->addValue( Vce );
+    circuit->addNet( net );
 
-    QByteArray _circuit("");
+    CIRCUIT_ANALYZE_DC analyzeDc = { "", _range.start, _range.end, 0.01 };
 
-
-    _circuit.append( QString("Tsunami\n\n"));
-    _circuit.append( QString("q1 2 1 0 qmodel\n"));
 
 
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         // Id(Vg)| Vd = const
-        _circuit.append( QString("Vbe 1 0 %1\n").arg(Vbe) );
-        _circuit.append( QString("Vce 2 0 %1\n").arg(Vce) );
-        _circuit.append( QString(".dc Vbe %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-        _circuit.append( QString(".print dc i(Vbe)\n") );
+        net = TNet::createNet( "Vbe" );
+        net->setTerminals(2, 1, 0 );
+        net->addValue( Vbe );
+        circuit->addNet( net );
+        ::strcpy( analyzeDc.name, "Vbe");
 
+        circuit->addPrint(2, "dc", "i(Vbe)" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
-        _circuit.append( QString("Ib 0 1 %1\n").arg(Ib) );
-        _circuit.append( QString("Vce 2 0 %1\n").arg(Vce) );
-        _circuit.append( QString(".dc Vce %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-        _circuit.append( QString(".print dc i(Vce)\n") );
-    }else{
-        // error;
+        net = TNet::createNet( "Ib" );
+        net->setTerminals(2, 0, 1 );
+        net->addValue( Ib );
+        circuit->addNet( net );
+        ::strcpy( analyzeDc.name, "Vce");
+        circuit->addPrint(2, "dc", "i(Vce)" );
     }
+    circuit->setAnalyze( analyzeDc );
 
-
-
-    _circuit.append( ".options noacct nopage\n" );
-    // #TODO: fix
-//    setPolarity("NPN");
-
+    CIRCUIT_MODEL circuitModel = {"bjt", "NPN",0};
     if( polarity() == TDevice::POLARITY_P ){
-        _circuit.append( ".model qmodel PNP\n" );
-    }else if( polarity() == TDevice::POLARITY_N ) {
-        _circuit.append( ".model qmodel NPN\n" );
-    }else{
-        _circuit.append( ".model qmodel NPN\n" );
+        strcpy(circuitModel.polarity,"PNP");
     }
 
-
-    if(_model.name.compare( "Gummel-Poon", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=1\n");
-    }else if(_model.name.compare( "VBIC", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=4\n");
-    }
+    MODEL_STRUCT model = getModel();
+    circuitModel.level = getLevel( &model.name );
 
     foreach( TParameter *param,getParameters() ){
-        if(param->isInclude()){
-            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-        }
+        circuitModel.parameters.insert(param->name(),param->value());
     }
 
+    QVector<QPointF> simulatedData;
 
-    _circuit.append( "\n.end" );
-
-    int _writed = cirFile.write( _circuit );
-    if(_writed == -1){
-        qDebug() << "sss";
-        //error;
-        //    return;
-    }
-    cirFile.flush();
-    cirFile.close();
-
-    if(!cirFile.exists()){
-        qDebug() << "ss";
+    if(!circuit->simulate()){
+        TSLog( "Simulated data" );
+        return simulatedData;
     }
 
-    proc->start( spicePath, spiceArg );
-    if(!proc->waitForStarted()){
-        qDebug() << "sss";
+    QVector< QVector<double> > results = circuit->getResult();
+    for(int i=0; i < results.count(); i++){
+        QVector<double> row = results.at(i);
+        QPointF point( row.at(0), row.at(1) );
+        simulatedData << point;
     }
 
-    if(!proc->waitForFinished()){
-        qDebug() << "sss1";
-    }
-
-    if(!outFile.open( QIODevice::ReadOnly )){
-        qDebug() << outFile.errorString();
-
-        //        delete proc;
-        //    return;
-    }
-
-    QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-    double I=0.0,V=0.0;
-    while(!outFile.atEnd()){
-        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-        if(_columns.count() == 3){
-            QMap<TDevice::Axis,double> _map;
-            V = _columns.at(1).toDouble();
-            I = _columns.at(2).toDouble();
-
-            _map.insert( AXIS_X, V );
-            _map.insert( AXIS_Y, -I);
-
-            _vec.append(_map);
-
-        }
-    }
-
-    outFile.close();
-
-    //    outFile.remove();
-    //    cirFile.remove();
-
-    //    proc->close();
-    //    if(proc->isOpen()){
-    //        qDebug() << "Proc open";
-    //    }
-    try{
-        delete proc;
-    }catch(...){
-        //
-    }
-
-
-
-    return _vec;
+    return simulatedData;
 }
 
 QString BJT::image(){
@@ -713,38 +562,34 @@ QStringList BJT::columnTitles(QString plot_type)
     return _columns;
 }
 
-QMap<TDevice::Axis, double> BJT::computeValue(QString plot_name, QMap<QString, double> values)
+QPointF BJT::computeValue(QString plot_name, QMap<QString, double> values)
 {
-    QMap<TDevice::Axis, double> value;
+    QPointF point;
     if(plot_name == "in"){
         if(values.contains("Ib") && values.contains("Vb")){
-            value.insert( TDevice::AXIS_X , values["Vb"] );
-            value.insert( TDevice::AXIS_Y , values["Ib"] );
+            point = QPointF( values["Vb"], values["Ib"] );
         }
     }else if(plot_name == "out"){
         if(values.contains("Ic") && values.contains("Vc")){
-            value.insert( TDevice::AXIS_X , values["Vc"] );
-            value.insert( TDevice::AXIS_Y , values["Ic"] );
-
+            point = QPointF( values["Vc"], values["Ic"] );
         }
     }else if(plot_name == "betta"){
-        if(values.contains("Ib") && values.contains("Ic")){
-            if(values.contains("Betta")){
-                value.insert( TDevice::AXIS_X ,  values["Ic"] );
-                value.insert( TDevice::AXIS_Y , values["Betta"] );
-            }else if(values.contains("Ib") != 0.0){
-                value.insert( TDevice::AXIS_X ,  values["Ic"] );
-                value.insert( TDevice::AXIS_Y , values["Ic"] / values["Ib"] );
-            }
+//        if(values.contains("Ib") && values.contains("Ic")){
+//            if(values.contains("Betta")){
+//                value.insert( TDevice::AXIS_X ,  values["Ic"] );
+//                value.insert( TDevice::AXIS_Y , values["Betta"] );
+//            }else if(values.contains("Ib") != 0.0){
+//                value.insert( TDevice::AXIS_X ,  values["Ic"] );
+//                value.insert( TDevice::AXIS_Y , values["Ic"] / values["Ib"] );
+//            }
 
-        }
+//        }
     }else{
-        value.insert( TDevice::AXIS_X , 0 );
-        value.insert( TDevice::AXIS_Y , 0 );
+        point = QPointF( INFINITY, INFINITY );
 
     }
 
-    return value;
+    return point;
 }
 
 

@@ -18,14 +18,14 @@ public:
     ~BJT() {}
     void init();
     void simulate(QString _plot_type);
-    QVector< QMap<Axis, double> >  simulate(QString _plot_type, STEP_RANGE _range);
-    QVector< QMap<Axis, double> >  getPlotData(QString _plot_type, STEP_RANGE _range);
+    QVector< QPointF >  simulate(QString _plot_type, STEP_RANGE _range);
+    QVector< QPointF >  getPlotData(QString _plot_type, STEP_RANGE _range);
+    QPointF computeValue(QString plot_name, QMap<QString, double> values);
     QString image();
 
     void setGround(QString ground);
     void setPolarity(QString polarity);
 
-    QMap<Axis,double> computeValue(QString plot_name, QMap<QString, double> values);
     QString groundName();
     QString polarityName();
     QStringList constantTitles(QString plot_type);

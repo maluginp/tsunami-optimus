@@ -54,7 +54,7 @@ FormStrategy::FormStrategy(QWidget *parent) :
     connect(ui->actionNewStrategy,SIGNAL(triggered()),this,SLOT(newStrategy()));
     connect(ui->listStrategies,SIGNAL(clicked(QModelIndex)),this,SLOT(selectStrategy(QModelIndex)));
     connect(ui->acceptButton,SIGNAL(clicked()),this,SLOT(clickAccept()));
-    connect(ui->tblMeasures,SIGNAL(doubleClicked(QModelIndex)),this, SLOT(selectMeasure(QModelIndex) ));
+    connect(ui->tblMeasures,SIGNAL(clicked(QModelIndex)),this, SLOT(selectMeasure(QModelIndex) ));
 
 }
 

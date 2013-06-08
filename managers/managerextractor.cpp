@@ -77,8 +77,6 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
     //    TDataset *dataset = mStrategy->dataset();
     //    QList<TMeasure *> measures = dataset->measures( mStrategy->excludePlots() );
 
-
-
     QList<EXTRACTOR_PLOT> _plots;
 
     PLOT_AXIS_RANGE _range;
@@ -122,22 +120,18 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
         device()->setSourceTerminal( _db.constants );
 
 
-        QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-        _vec =  device()->getPlotData( plot_type , _step  );
+        QVector< QPointF > points;
+        points =  device()->getPlotData( plot_type , _step  );
 
         EXTRACTOR_PLOT _plot;
 
-        int _count_vec = _vec.count();
-
-        for(int i=0; i < _count_vec;i++){
+        for(int i=0; i < points.count();i++){
             if(device()->polarity() == TDevice::POLARITY_P){
-                _plot.model_x << -_vec.at(i).value(TDevice::AXIS_X);
-                _plot.model_y << -_vec.at(i).value(TDevice::AXIS_Y);
+                _plot.model_x << -points.at(i).x();
+                _plot.model_y << -points.at(i).y();
             }else{
-                _plot.model_x << _vec.at(i).value(TDevice::AXIS_X);
-                _plot.model_y << _vec.at(i).value(TDevice::AXIS_Y);
+                _plot.model_x << points.at(i).x();
+                _plot.model_y << points.at(i).y();
             }
         }
 
@@ -168,47 +162,31 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
             //                      terminal->setVoltage( terminal->getMeasure(TTerminal::VOLTAGE) );
             //                }
 
-            QMap<TDevice::Axis,double> _plot_values = device()->computeValue(plot_type,_measures);
-
+            QPointF pointPlot = device()->computeValue(plot_type,_measures);
 
             if(device()->polarity() == TDevice::POLARITY_P){
-                _plot.measure_x << -_plot_values[TDevice::AXIS_X];
-                _plot.measure_y << -_plot_values[TDevice::AXIS_Y];
+
+                _plot.measure_x << -pointPlot.x();
+                _plot.measure_y << -pointPlot.y();
             }else{
-                _plot.measure_x << _plot_values[TDevice::AXIS_X];
-                _plot.measure_y << _plot_values[TDevice::AXIS_Y];
+                _plot.measure_x << pointPlot.x();
+                _plot.measure_y << pointPlot.y();
             }
 
             // X
-            if(_plot_values[TDevice::AXIS_X] > _ranges[TDevice::AXIS_X].max){
-                _ranges[TDevice::AXIS_X].max = _plot_values[TDevice::AXIS_X];
-            }
-            if(_plot_values[TDevice::AXIS_X] < _ranges[TDevice::AXIS_X].min){
-                _ranges[TDevice::AXIS_X].min = _plot_values[TDevice::AXIS_X];
-            }
-            // Y
-            if(_plot_values[TDevice::AXIS_Y] > _ranges[TDevice::AXIS_Y].max){
-                _ranges[TDevice::AXIS_Y].max = _plot_values[TDevice::AXIS_Y];
-            }
-            if(_plot_values[TDevice::AXIS_Y] < _ranges[TDevice::AXIS_Y].min){
-                _ranges[TDevice::AXIS_Y].min = _plot_values[TDevice::AXIS_Y];
-            }
-
-
-
-            //                device()->simulate(measure->plotType());
-
-            //                QMap<QString,double> _models;
-            //                foreach(TTerminal *terminal,mDevice->terminals()){
-            //                    _models.insert( QString("I"+terminal->name().toLower()), terminal->getCurrent());
-            //                    _models.insert( QString("V"+terminal->name().toLower()), terminal->getVoltage());
-            //                }
-
-
-            //                _plot_values = device()->plot_value(plot_type,_models);
-
-            //                _plot.model_x << _plot_values[TDevice::AXIS_X];
-            //                _plot.model_y << _plot_values[TDevice::AXIS_Y];
+//            if(_plot_values[TDevice::AXIS_X] > _ranges[TDevice::AXIS_X].max){
+//                _ranges[TDevice::AXIS_X].max = _plot_values[TDevice::AXIS_X];
+//            }
+//            if(_plot_values[TDevice::AXIS_X] < _ranges[TDevice::AXIS_X].min){
+//                _ranges[TDevice::AXIS_X].min = _plot_values[TDevice::AXIS_X];
+//            }
+//            // Y
+//            if(_plot_values[TDevice::AXIS_Y] > _ranges[TDevice::AXIS_Y].max){
+//                _ranges[TDevice::AXIS_Y].max = _plot_values[TDevice::AXIS_Y];
+//            }
+//            if(_plot_values[TDevice::AXIS_Y] < _ranges[TDevice::AXIS_Y].min){
+//                _ranges[TDevice::AXIS_Y].min = _plot_values[TDevice::AXIS_Y];
+//            }
 
             _measures.clear();
 

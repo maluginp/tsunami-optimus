@@ -15,7 +15,7 @@ TParameter::TParameter(QString key, int value){
     mInclude = false;
 }
 
-QString TParameter::getName()
+QString TParameter::name()
 {
     return mKey;
 }

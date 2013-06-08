@@ -18,7 +18,7 @@ public:
     TParameter( QString key, QString value );
     TParameter( QString key, int value );
 
-    QString getName();
+    QString name();
 
     QVariant value(){
         return mValue;

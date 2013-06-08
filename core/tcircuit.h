@@ -17,6 +17,7 @@ struct CIRCUIT_ANALYZE_DC{
 struct CIRCUIT_MODEL{
     char name[255];
     char polarity[255];
+    int level;
     QMap<QString,QVariant> parameters;
 };
 
@@ -34,7 +35,7 @@ public:
     void addPrint(QStringList prints);
     void addPrint(int count, ...);
     bool simulate();
-    QVector< QVector<double> > getResult();
+    inline QVector< QVector<double> > getResult() { return result_; }
 
 
 private:

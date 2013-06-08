@@ -134,6 +134,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="closeButton">
+       <property name="text">
+        <string>Закрыть</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="btnAccept">
        <property name="text">
         <string>Выбрать</string>

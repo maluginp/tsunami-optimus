@@ -6,23 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>323</width>
-    <height>254</height>
+    <width>278</width>
+    <height>176</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Добавить устройство</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Название:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLineEdit" name="lnName"/>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="boxType"/>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="labelType">
@@ -31,50 +24,24 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QComboBox" name="boxType"/>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="lnName"/>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="labelPolarity">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Полярность:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QComboBox" name="boxPolarity"/>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="labelGround">
-     <property name="text">
-      <string>Земля:</string>
+      <string>Название:</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
-    <widget class="QComboBox" name="boxGround"/>
-   </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="widthChannelLabel">
+    <widget class="QPushButton" name="btnAdd">
      <property name="text">
-      <string>Ширина:</string>
+      <string>Добавить</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="QLineEdit" name="widthChannelLineEdit"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="lengthChannelLabel">
-     <property name="text">
-      <string>Длина:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QLineEdit" name="lengthChannelLineEdit"/>
-   </item>
-   <item row="6" column="0">
+   <item row="3" column="0">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -87,12 +54,15 @@
      </property>
     </spacer>
    </item>
-   <item row="6" column="1">
-    <widget class="QPushButton" name="btnAdd">
+   <item row="2" column="0">
+    <widget class="QLabel" name="labelPolarity">
      <property name="text">
-      <string>Добавить</string>
+      <string>Полярность:</string>
      </property>
     </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="boxPolarity"/>
    </item>
   </layout>
  </widget>

@@ -19,8 +19,6 @@ DialogNewDevice::DialogNewDevice(QWidget *parent) :
 
     ui->boxType->setCurrentIndex( 0 );
 
-    ui->boxGround->hide();
-    ui->labelGround->hide();
 
     connect(ui->btnAdd,SIGNAL(clicked()),this,SLOT(clickAdd()));
 }
@@ -86,18 +84,6 @@ void DialogNewDevice::clickAdd(){
 
             _map.insert( "ground", "S" );
 
-            double _temp = 0.0;
-            bool ok;
-            _temp = ui->widthChannelLineEdit->text().toDouble(&ok);
-            if(!ok){
-                _temp = 0.0;
-            }
-            _map.insert( "W", _temp );
-            _temp = ui->lengthChannelLineEdit->text().toDouble(&ok);
-            if(!ok){
-                _temp = 0.0;
-            }
-            _map.insert( "L", _temp );
 
         }
 
@@ -119,16 +105,12 @@ void DialogNewDevice::on_boxType_currentIndexChanged(const QString &arg1){
     ui->labelPolarity->show();
 
     if(arg1.compare("MOSFET",Qt::CaseInsensitive) == 0){
-        ui->widthChannelLabel->show();
-        ui->widthChannelLineEdit->show();
-        ui->lengthChannelLabel->show();
-        ui->lengthChannelLineEdit->show();
+//        ui->widthChannelLabel->show();
+//        ui->widthChannelLineEdit->show();
+//        ui->lengthChannelLabel->show();
+//        ui->lengthChannelLineEdit->show();
 
     }else{
-        ui->widthChannelLabel->hide();
-        ui->widthChannelLineEdit->hide();
-        ui->lengthChannelLabel->hide();
-        ui->lengthChannelLineEdit->hide();
         if(arg1.compare("DIODE",Qt::CaseInsensitive) == 0){
             ui->boxPolarity->hide();
             ui->labelPolarity->hide();

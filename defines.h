@@ -32,9 +32,10 @@ typedef QMap<QString,double> TParameters;
 
 #ifdef Q_OS_WIN
 #define INFINITY (std::numeric_limits<double>::infinity())
-#endif
-
 #define NGSPICE_PATH "spice/bin/ngspice.exe"
+#else
+#define NGSPICE_PATH "ngspice"
+#endif
 
 typedef struct _STEP_RANGE_{
     double start;
@@ -44,6 +45,20 @@ typedef struct _STEP_RANGE_{
 
 
 #define TSLog( STR ) (qDebug() << (STR));
+
+
+inline int getLevel( const QString *level ){
+    QMap<QString,int> models;
+    models.insert( "BSIM3v3", 8 );
+    models.insert( "LEVEL2" , 2 );
+    models.insert( "LEVEL3" , 3 );
+    models.insert( "GummelPoon", 1);
+    models.insert( "VBIC", 4);
+
+    int l = models.value(*level,0);
+
+    return l;
+}
 
 
 

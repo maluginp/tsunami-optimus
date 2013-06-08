@@ -453,7 +453,7 @@ QList<TTerminal *> TDevice::terminals(){
 
 TParameter *TDevice::parameter(QString name) {
     foreach(TParameter *parameter,parameters_){
-        if(parameter->getName() == name){
+        if(parameter->name() == name){
             return parameter;
         }
     }

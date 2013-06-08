@@ -24,9 +24,13 @@ DialogOpenDevice::DialogOpenDevice(QWidget *parent) :
 
     updateDeviceList();
 
+    ui->btnAdd->setHidden( true );
+    ui->btnAdd->setEnabled( false );
+
     connect(ui->btnAccept,SIGNAL(clicked()),this,SLOT(accept()));
     connect(ui->listDevices,SIGNAL(clicked(QModelIndex)),this,SLOT(setDevice(QModelIndex)));
     connect(ui->btnAdd,SIGNAL(clicked()),this,SLOT(newDevice()));
+    connect(ui->closeButton,SIGNAL(clicked()),this,SLOT(close()));
 }
 
 DialogOpenDevice::~DialogOpenDevice(){

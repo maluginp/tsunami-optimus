@@ -113,7 +113,7 @@ bool TCircuit::simulate(){
     file.write( buffer );
 
     foreach(TNet* net,nets_){
-        ::sprintf( buffer, "%s\n", net->getString().toAscii());
+        ::sprintf( buffer, "%s\n", net->getString().toAscii().data());
         file.write( buffer );
     }
 
@@ -122,15 +122,20 @@ bool TCircuit::simulate(){
                analyzeDc_.end, analyzeDc_.step  );
     file.write( buffer );
 
-    ::sprintf( buffer, ".print %s\n", prints_.join(" ") );
+    ::sprintf( buffer, ".print %s\n", prints_.join(" ").toAscii().data() );
     file.write( buffer );
 
     foreach(CIRCUIT_MODEL model,models_){
         ::sprintf( buffer, ".model %s %s\n", model.name,model.polarity );
         file.write(buffer);
+        if(model.level != 0){
+            ::sprintf( buffer, "+ LEVEL=%d", model.level );
+            file.write(buffer);
+        }
+
         foreach(QString key,model.parameters.keys()){
 
-            ::sprintf( buffer, "+ %s=%s",key,model.parameters.value(key));
+            ::sprintf( buffer, "+ %s=%f",key.toAscii().data(),model.parameters.value(key).toDouble());
             file.write(buffer);
 
         }
@@ -140,7 +145,11 @@ bool TCircuit::simulate(){
     file.close();
 
     ::sprintf(buffer,"%s -b %s",spicePath_,filename_);
+#ifdef Q_OS_WIN
     FILE* pipe = _popen( buffer, "rb" );
+#else
+    FILE* pipe = fopen("","rb");
+#endif
     if(pipe == NULL){
         TSLog("Couldn't run simulate");
         return false;
@@ -171,10 +180,12 @@ bool TCircuit::simulate(){
 
         }
     }
-
+#ifdef Q_OS_WIN
     _pclose( pipe );
+#else
+    fclose( pipe );
+#endif
 
     return true;
-
 
 }

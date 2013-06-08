@@ -22,6 +22,9 @@ struct MODEL_STRUCT{
     QString path;
 };
 
+
+
+
 class TDevice : public QObject {
     Q_OBJECT
 public:
@@ -35,14 +38,13 @@ public:
     explicit TDevice(QObject *parent = 0);
     virtual ~TDevice();
 
-    virtual void init() = 0;
-    virtual QVector< QMap<Axis, double> >  simulate(QString _plot_type, STEP_RANGE _range) = 0;
-    virtual QVector< QMap<Axis, double> >  getPlotData(QString _plot_type, STEP_RANGE _range) = 0;
-    virtual QMap<Axis,double> computeValue(QString plot_name,QMap<QString,double> values) = 0;
-    virtual QString image() = 0;
+    virtual void              init() = 0;
+    virtual QVector<QPointF>  simulate(QString _plot_type, STEP_RANGE _range) = 0;
+    virtual QVector<QPointF>  getPlotData(QString _plot_type, STEP_RANGE _range) = 0;
+    virtual QPointF           computeValue(QString plot_name,QMap<QString,double> values) = 0;
+    virtual QString           image() = 0;
 
     QString image(     QString name );
-
     QString name();
 
     TTerminal *terminal(  QString name );

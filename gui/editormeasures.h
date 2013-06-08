@@ -95,7 +95,7 @@ private:
 
 
 protected:
-    void closeEvent(QCloseEvent *event);
+//    void closeEvent(QCloseEvent *event);
     bool maybeSave();
 
 };

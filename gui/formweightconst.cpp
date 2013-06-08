@@ -72,9 +72,9 @@ FormWeightConst::FormWeightConst(int strategy_id, int measure_id, QWidget *paren
             }
 
 
-            QMap<TDevice::Axis, double> point = device->computeValue( _strategy_db.type, _values );
-            X << point.value( TDevice::AXIS_X );
-            Y << point.value( TDevice::AXIS_Y );
+            QPointF point = device->computeValue( _strategy_db.type, _values );
+            X << point.x();
+            Y << point.y();
         }
 
         graph->addData( X, Y );

@@ -31,7 +31,9 @@ FormModels::FormModels(QString device_type, QWidget *parent) :
 
      connect(ui->btnAccept,SIGNAL(clicked()),this,SLOT(clickAccept()));
      connect(ui->lnModelsFIlter,SIGNAL(textEdited(QString)),this,SLOT(applyFilter(QString)));
-     connect(ui->listModels,SIGNAL(activated(QModelIndex)),this,SLOT(changeIndexListModels(QModelIndex)));
+     connect(ui->listModels,SIGNAL(clicked(QModelIndex)),this,SLOT(changeIndexListModels(QModelIndex)));
+//     connect(ui->listModels,SIGNAL(c))
+     connect(ui->closeButton,SIGNAL(clicked()),this,SLOT(close()));
 }
 
 
