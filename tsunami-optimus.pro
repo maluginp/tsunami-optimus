@@ -61,7 +61,9 @@ SOURCES += main.cpp\
     gui/formsetting.cpp \
     gui/formweightconst.cpp \
     core/tsetting.cpp \
-    gui/dialogs/dialogdeletedevices.cpp
+    gui/dialogs/dialogdeletedevices.cpp \
+    core/tcircuit.cpp \
+    core/tnet.cpp
 
 HEADERS  += deviceworkspace.h \
     gui/formminimisation.h \
@@ -118,7 +120,9 @@ HEADERS  += deviceworkspace.h \
     core/tsetting.h \
     gui/dialogs/dialogdeletedevices.h \
     core/tdevice.h \
-    gui/gui_func.h
+    gui/gui_func.h \
+    core/tcircuit.h \
+    core/tnet.h
 
 FORMS    += deviceworkspace.ui \
     gui/formminimisation.ui \

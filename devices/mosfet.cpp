@@ -1,5 +1,7 @@
 #include "mosfet.h"
 
+#include "core/tcircuit.h"
+
 MOSFET::MOSFET(int device_id) : TDevice(device_id)
 {
 
@@ -121,164 +123,12 @@ QString MOSFET::image()
     return _img;
 }
 
-void MOSFET::simulate(QString _plot_type){
 
-    QProcess *proc = new QProcess();
-
-    QString spicePath( NGSPICE_PATH );
-    QStringList spiceArg;
-    spiceArg << "-b" << "-owork.out" << "work.cir";
-
-
-
-
-
-    QFile cirFile( "work.cir" ),
-            outFile("work.out");
-
-    if(cirFile.exists()){
-        cirFile.remove();
-    }
-    if(outFile.exists()){
-        outFile.remove();
-    }
-
-    if(!cirFile.open( QIODevice::ReadWrite | QIODevice::Text )){
-        delete proc;
-        return;
-    }
-    // Жёстко земля S
-    double Vds = 0.0, Vgs = 0.0 ,Vbs = 0.0;
-
-    Vds = terminal("D")->getVoltage() - terminal("S")->getVoltage();
-    Vgs = terminal("G")->getVoltage() - terminal("S")->getVoltage();
-    Vbs = terminal("B")->getVoltage() - terminal("S")->getVoltage();
-
-
-    MODEL_STRUCT _model = getModel();
-
-    QByteArray _circuit("");
-
-    double L = 10e-6,
-            W = 100e-6;
-
-
-
-
-    _circuit.append( QString("Tsunami\n\n"));
-    _circuit.append( QString("m1 2 1 0 3 mos L=%1 W=%2\n").arg(L).arg(W) );
-    _circuit.append( QString("Vds 2 0 %1\n").arg(Vds) );
-    _circuit.append( QString("Vgs 1 0 %1\n").arg(Vgs) );
-    _circuit.append( QString("Vbs 3 0 %1\n").arg(Vbs) );
-
-    if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
-        // Id(Vg)| Vd = const
-        _circuit.append( QString(".dc Vgs %1 %2 %3\n").arg(Vgs).arg(Vgs).arg(1.0) );
-    }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
-        _circuit.append( QString(".dc Vds %1 %2 %3\n").arg(Vds).arg(Vds).arg(1.0) );
-    }else{
-        // error;
-    }
-    _circuit.append( ".options noacct nopage\n" );
-    _circuit.append( QString(".print dc i(Vds) i(Vbs)\n") );
-
-    // #TODO: fix
-    setPolarity(TDevice::POLARITY_N);
-
-    if( polarity() == TDevice::POLARITY_N ){
-        _circuit.append( ".model mos NMOS\n" );
-    }else if( polarity() == TDevice::POLARITY_P ) {
-        _circuit.append( ".model mos PMOS\n" );
-    }else{
-        _circuit.append( ".model mos NMOS\n" );
-    }
-
-
-    if(_model.name.compare( "BSIM3v3", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=8\n");
-    } else if( _model.name.compare("LEVEL2", Qt::CaseInsensitive) == 0 ){
-        _circuit.append("+ LEVEL=2\n");
-    } else if( _model.name.compare("LEVEL3", Qt::CaseInsensitive) == 0){
-        _circuit.append("+ LEVEL=3\n");
-    }
-
-    foreach( TParameter *param,getParameters() ){
-        if(param->isInclude()){
-            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-        }
-    }
-
-
-    _circuit.append( "\n.end" );
-
-    int _writed = cirFile.write( _circuit );
-    if(_writed == -1){
-        //error;
-        return;
-    }
-    cirFile.flush();
-    cirFile.close();
-
-    proc->start( spicePath, spiceArg );
-    if(!proc->waitForStarted()){
-        qDebug() << "sss";
-    }
-
-    if(!proc->waitForFinished()){
-        qDebug() << "sss1";
-    }
-
-    if(!outFile.open( QIODevice::ReadOnly )){
-        delete proc;
-        return;
-    }
-
-
-    double Ids=0.0,Ibs=0.0;
-    while(!outFile.atEnd()){
-        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-        if(_columns.count() == 4){
-            Ibs = _columns.at(3).toDouble();
-            Ids = _columns.at(2).toDouble();
-        }
-    }
-
-    outFile.close();
-
-    outFile.remove();
-    cirFile.remove();
-    // #TODO: What's the fuck??
-    terminal( "D" )->setCurrent( -Ids );
-    terminal( "G" )->setCurrent( 0.0 );
-    terminal( "S" )->setCurrent( 0.0 );
-    terminal( "B" )->setCurrent( -Ibs );
-
-    proc->close();
-    if(proc->isOpen()){
-        qDebug() << "Proc open";
-    }
-    delete proc;
-    return;
-}
 
 QVector< QMap<TDevice::Axis, double> > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
 
     QMutexLocker locker(&mutexSimulate);
-    QProcess *proc = new QProcess();
 
-    QString spicePath( NGSPICE_PATH );
-    QStringList spiceArg;
-    spiceArg << "-b" << "-owork.out" << "work.cir";
-
-    QFile cirFile( "work.cir" ),
-            outFile("work.out");
-
-
-    if(!cirFile.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate )){
-
-        delete proc;
-        //    return;
-    }
     // Жёстко земля S
     double Vds = 0.0, Vgs = 0.0 ,Vbs = 0.0;
 
@@ -289,125 +139,136 @@ QVector< QMap<TDevice::Axis, double> > MOSFET::simulate(QString _plot_type, STEP
 
     MODEL_STRUCT _model = getModel();
 
-    QByteArray _circuit("");
-
-//    double L = 10e-6,
-//            W = 100e-6;
-
-    double L = setting( "L" ).toDouble(),
+   double L = setting( "L" ).toDouble(),
             W = setting( "W" ).toDouble();
 
-    _circuit.append( QString("Tsunami\n\n"));
-    _circuit.append( QString("m1 2 1 0 3 mos L=%1 W=%2\n").arg(L).arg(W) );
-    _circuit.append( QString("Vds 2 0 %1\n").arg(Vds) );
-    _circuit.append( QString("Vgs 1 0 %1\n").arg(Vgs) );
-    _circuit.append( QString("Vbs 3 0 %1\n").arg(Vbs) );
+    TCircuit* circuit = new TCircuit("MOSFET simulate","mos.cir",NGSPICE_PATH);
+    TNet* net;
+    QVector<QVariant> values;
 
+    values << "mos" << QString("L=%1").arg(L) << QString("W=%1").arg(W);
+    net = TNet::createNet( "m1" );
+    net->setTerminals( 4, 2, 1, 0, 3 );
+    net->addValue( values );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vds" );
+    net->setTerminals(2, 2, 0 );
+    net->addValue( Vds );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vgs" );
+    net->setTerminals(2, 1, 0 );
+    net->addValue( Vgs );
+    circuit->addNet( net );
+
+    net = TNet::createNet( "Vbs" );
+    net->setTerminals(2, 3, 0 );
+    net->addValue( Vbs );
+    circuit->addNet( net );
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
-        // Id(Vg)| Vd = const
-        _circuit.append( QString(".dc Vgs %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
+        strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
-        _circuit.append( QString(".dc Vds %1 %2 %3\n").arg(_range.start).arg(_range.end).arg(_range.step) );
-    }else{
-        // error;
-    }
-    _circuit.append( ".options noacct nopage\n" );
-    _circuit.append( QString(".print dc i(Vds) i(Vbs)\n") );
-
-    // #TODO: fix
-    setPolarity(TDevice::POLARITY_N);
-
-    if( polarity() == TDevice::POLARITY_N ){
-        _circuit.append( ".model mos NMOS\n" );
-    }else if( polarity() == TDevice::POLARITY_P ) {
-        _circuit.append( ".model mos PMOS\n" );
-    }else{
-        _circuit.append( ".model mos NMOS\n" );
+        strcpy( dcAnalyze.name, "Vds" );
     }
 
+    circuit->setAnalyze(dcAnalyze);
+    circuit->addPrint(3,"dc","i(Vds)","i(Vbs)");
 
-    if(_model.name.compare( "BSIM3v3", Qt::CaseInsensitive ) == 0){
-        _circuit.append("+ LEVEL=8\n");
-    } else if( _model.name.compare("LEVEL2", Qt::CaseInsensitive) == 0 ){
-        _circuit.append("+ LEVEL=2\n");
-    } else if( _model.name.compare("LEVEL3", Qt::CaseInsensitive) == 0){
-        _circuit.append("+ LEVEL=3\n");
-    }
+    CIRCUIT_MODEL circuitModel = {"mos", "NMOS"};
 
-    foreach( TParameter *param,getParameters() ){
-        if(param->isInclude()){
-            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
-        }
-    }
-
-
-    _circuit.append( "\n.end" );
-
-    int _writed = cirFile.write( _circuit );
-    if(_writed == -1){
-        qDebug() << "sss";
-        //error;
-        //    return;
-    }
-    cirFile.flush();
-    cirFile.close();
-
-    if(!cirFile.exists()){
-        qDebug() << "ss";
-    }
-
-    proc->start( spicePath, spiceArg );
-    if(!proc->waitForStarted()){
-        qDebug() << "sss";
-    }
-
-    if(!proc->waitForFinished()){
-        qDebug() << "sss1";
-    }
-
-    if(!outFile.open( QIODevice::ReadOnly )){
-        qDebug() << outFile.errorString();
-
-//        delete proc;
-        //    return;
-    }
-
-    QVector< QMap<TDevice::Axis, double> > _vec;
-
-
-    double Ids=0.0,Ibs=0.0,V;
-    while(!outFile.atEnd()){
-        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
-        if(_columns.count() == 4){
-            QMap<TDevice::Axis,double> _map;
-            V = _columns.at(1).toDouble();
-            Ibs = _columns.at(3).toDouble();
-            Ids = _columns.at(2).toDouble();
-
-            _map.insert( AXIS_X, V );
-            _map.insert( AXIS_Y, -Ids);
-
-            _vec.append(_map);
-
-        }
-    }
-
-    outFile.close();
-
-//    outFile.remove();
-//    cirFile.remove();
-
-//    proc->close();
-//    if(proc->isOpen()){
-//        qDebug() << "Proc open";
+//    if( polarity() == TDevice::POLARITY_N ){
+//        _circuit.append( ".model mos NMOS\n" );
+//    }else if( polarity() == TDevice::POLARITY_P ) {
+//        _circuit.append( ".model mos PMOS\n" );
+//    }else{
+//        _circuit.append( ".model mos NMOS\n" );
 //    }
-    try{
-        delete proc;
-    }catch(...){
-        //
-    }
 
 
+//    if(_model.name.compare( "BSIM3v3", Qt::CaseInsensitive ) == 0){
+//        _circuit.append("+ LEVEL=8\n");
+//    } else if( _model.name.compare("LEVEL2", Qt::CaseInsensitive) == 0 ){
+//        _circuit.append("+ LEVEL=2\n");
+//    } else if( _model.name.compare("LEVEL3", Qt::CaseInsensitive) == 0){
+//        _circuit.append("+ LEVEL=3\n");
+//    }
+
+//    foreach( TParameter *param,getParameters() ){
+//        if(param->isInclude()){
+//            _circuit.append( QString("+ %1=%2\n").arg(param->getName()).arg(param->getDouble()) );
+//        }
+//    }
+
+
+//    _circuit.append( "\n.end" );
+
+//    int _writed = cirFile.write( _circuit );
+//    if(_writed == -1){
+//        qDebug() << "sss";
+//        //error;
+//        //    return;
+//    }
+//    cirFile.flush();
+//    cirFile.close();
+
+//    if(!cirFile.exists()){
+//        qDebug() << "ss";
+//    }
+
+//    proc->start( spicePath, spiceArg );
+//    if(!proc->waitForStarted()){
+//        qDebug() << "sss";
+//    }
+
+//    if(!proc->waitForFinished()){
+//        qDebug() << "sss1";
+//    }
+
+//    if(!outFile.open( QIODevice::ReadOnly )){
+//        qDebug() << outFile.errorString();
+
+////        delete proc;
+//        //    return;
+//    }
+
+//    QVector< QMap<TDevice::Axis, double> > _vec;
+
+
+//    double Ids=0.0,Ibs=0.0,V;
+//    while(!outFile.atEnd()){
+//        QList<QByteArray> _columns = outFile.readLine().trimmed().split('\t');
+//        if(_columns.count() == 4){
+//            QMap<TDevice::Axis,double> _map;
+//            V = _columns.at(1).toDouble();
+//            Ibs = _columns.at(3).toDouble();
+//            Ids = _columns.at(2).toDouble();
+
+//            _map.insert( AXIS_X, V );
+//            _map.insert( AXIS_Y, -Ids);
+
+//            _vec.append(_map);
+
+//        }
+//    }
+
+//    outFile.close();
+
+////    outFile.remove();
+////    cirFile.remove();
+
+////    proc->close();
+////    if(proc->isOpen()){
+////        qDebug() << "Proc open";
+////    }
+//    try{
+//        delete proc;
+//    }catch(...){
+//        //
+//    }
+
+    QVector< > _vec;
 
     return _vec;
 }

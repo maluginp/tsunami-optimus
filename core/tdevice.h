@@ -36,7 +36,6 @@ public:
     virtual ~TDevice();
 
     virtual void init() = 0;
-    virtual void simulate(QString _plot_type) = 0;
     virtual QVector< QMap<Axis, double> >  simulate(QString _plot_type, STEP_RANGE _range) = 0;
     virtual QVector< QMap<Axis, double> >  getPlotData(QString _plot_type, STEP_RANGE _range) = 0;
     virtual QMap<Axis,double> computeValue(QString plot_name,QMap<QString,double> values) = 0;

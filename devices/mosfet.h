@@ -10,7 +10,6 @@ public:
     ~MOSFET(){}
 
     void init();
-    void simulate(QString _plot_type);
     QVector< QMap<Axis, double> >  simulate(QString _plot_type, STEP_RANGE _range);
     QVector< QMap<Axis, double> >  getPlotData(QString _plot_type, STEP_RANGE _range);
     QMap<Axis,double> computeValue(QString plot_name, QMap<QString, double> values);

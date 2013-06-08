@@ -534,6 +534,12 @@ void EditorMeasures::importMeasures(){
 
 }
 
+void EditorMeasures::closeEditor(){
+    delete managerMeasures;
+    measures_.clear();
+    close();
+}
+
 void EditorMeasures::copyToClipboard()
 {
     QString cbStr;
@@ -830,7 +836,7 @@ void EditorMeasures::initialize()
     connect(ui->tblConstants,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(selectConstValue(QModelIndex)));
     connect(modelConstants,SIGNAL(itemChanged(QStandardItem*)),this,SLOT(changeDataConstant(QStandardItem*)));
     connect(ui->btnSave,SIGNAL(clicked()),this,SLOT(saveMeasure()));
-    connect(ui->btnClose,SIGNAL(clicked()),this,SLOT(close()));
+    connect(ui->btnClose,SIGNAL(clicked()),this,SLOT(closeEditor()));
     connect(ui->actionImport,SIGNAL(triggered()),this,SLOT(importMeasures()));
 
     connect(ui->actionCopyToClipboard,SIGNAL(triggered()),this,SLOT(copyToClipboard()));

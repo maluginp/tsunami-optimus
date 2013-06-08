@@ -44,6 +44,7 @@ private slots:
     void selectConstValue(QModelIndex index);
     void importMeasures();
 
+    void closeEditor();
     void copyToClipboard();
     void clickPlotter(QMouseEvent *event);
     void plottableClick(QCPAbstractPlottable* plot,QMouseEvent* mouse);

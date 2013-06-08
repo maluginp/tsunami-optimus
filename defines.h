@@ -34,7 +34,7 @@ typedef QMap<QString,double> TParameters;
 #define INFINITY (std::numeric_limits<double>::infinity())
 #endif
 
-#define NGSPICE_PATH "/usr/local/bin/ngspice"
+#define NGSPICE_PATH "spice/bin/ngspice.exe"
 
 typedef struct _STEP_RANGE_{
     double start;
@@ -42,6 +42,8 @@ typedef struct _STEP_RANGE_{
     double step;
 } STEP_RANGE;
 
+
+#define TSLog( STR ) (qDebug() << (STR));
 
 
 
