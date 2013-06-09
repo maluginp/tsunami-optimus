@@ -182,10 +182,10 @@ bool TStrategy::Delete()
 
 TDataset *TStrategy::dataset(){
 
-    TDataset *dataset = new TDataset(mDataset.id);
+    TDataset *dataset = new TDataset(mDatasetId);
 
     if(!dataset->Open()){
-        qDebug() << "Dataset didn't open";
+        TSLog("Dataset didn't open");
     }
 
     return dataset;

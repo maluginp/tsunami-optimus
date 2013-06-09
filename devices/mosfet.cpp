@@ -184,7 +184,9 @@ QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
 
     circuitModel.level = getLevel( &model.name );
     foreach( TParameter *param,getParameters() ){
-        circuitModel.parameters.insert(param->name(),param->value());
+        if(param->isInclude()){
+            circuitModel.parameters.insert(param->name(),param->value());
+        }
     }
 
     circuit->addModel( circuitModel );
@@ -263,7 +265,9 @@ QVector<QPointF> MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range){
 
     circuitModel.level = getLevel( &model.name );
     foreach( TParameter *param,getParameters() ){
-        circuitModel.parameters.insert(param->name(),param->value());
+        if(param->isInclude()){
+            circuitModel.parameters.insert(param->name(),param->value());
+        }
     }
 
     circuit->addModel( circuitModel );

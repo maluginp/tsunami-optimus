@@ -93,8 +93,15 @@ bool TCircuit::simulate(){
         return false;
     }
 
-    if(!QFile::exists( filename_ )){
+    char outfile[255];
+    strcpy( outfile, filename_ );
+    strcat( outfile, ".out");
+
+    if(QFile::exists( filename_ )){
         QFile::remove( filename_ );
+    }
+    if(QFile::exists(outfile)){
+        QFile::remove(outfile);
     }
     if(!QFile::exists( spicePath_ )){
         TSLog("Could't find spice simulator");
@@ -117,10 +124,11 @@ bool TCircuit::simulate(){
         file.write( buffer );
     }
 
-    ::sprintf( buffer, ".dc %s %f %f %f\n",
+    ::sprintf( buffer, ".dc %s %g %g %g\n",
                analyzeDc_.name, analyzeDc_.start,
                analyzeDc_.end, analyzeDc_.step  );
     file.write( buffer );
+    file.write( ".options noacct nopage\n" );
 
     ::sprintf( buffer, ".print %s\n", prints_.join(" ").toAscii().data() );
     file.write( buffer );
@@ -129,39 +137,50 @@ bool TCircuit::simulate(){
         ::sprintf( buffer, ".model %s %s\n", model.name,model.polarity );
         file.write(buffer);
         if(model.level != 0){
-            ::sprintf( buffer, "+ LEVEL=%d", model.level );
+            ::sprintf( buffer, "+ LEVEL=%d\n", model.level );
             file.write(buffer);
         }
 
         foreach(QString key,model.parameters.keys()){
 
-            ::sprintf( buffer, "+ %s=%f",key.toAscii().data(),model.parameters.value(key).toDouble());
+            ::sprintf( buffer, "+ %s=%g\n",key.toAscii().data(),model.parameters.value(key).toDouble());
             file.write(buffer);
 
         }
     }
-    file.write( ".options noacct nopage\n" );
+    file.write( ".end\n" );
     file.flush();
     file.close();
 
-    ::sprintf(buffer,"%s -b %s",spicePath_,filename_);
-#ifdef Q_OS_WIN
-    FILE* pipe = _popen( buffer, "rb" );
-#else
-    FILE* pipe = fopen("","rb");
-#endif
-    if(pipe == NULL){
-        TSLog("Couldn't run simulate");
+//    ::sprintf(buffer,"-b -o%s %s",outfile,filename_);
+    ::sprintf(buffer,"%s/%s",QDir::currentPath().toAscii().data(),spicePath_);
+    QStringList args;
+    args << "-b" << QString("-o%1").arg(outfile) << filename_;
+
+    QProcess *proc = new QProcess();
+    proc->start( buffer, args );
+    if(!proc->waitForStarted()){
+        return false;
+    }
+    if(!proc->waitForFinished()){
+        TSLog("Spice finished");
         return false;
     }
 
+    QFile pipe(outfile);
+
+    if(!pipe.open( QIODevice::ReadOnly )){
+        TSLog("Couldn't start simulate");
+        return false;
+    }
+    TSLog("Simulate started");
     int countValues = prints_.count();
     bool ok;
 
     result_.clear();
 
-    while( !feof(pipe) ){
-        if(fgets( buffer,1024, pipe )){
+    while( !pipe.atEnd() ){
+        if(pipe.readLine( buffer,1024 )){
             QString buf = QString::fromAscii(buffer);
             QStringList values = buf.trimmed().split('\t');
             values.removeFirst();
@@ -174,18 +193,17 @@ bool TCircuit::simulate(){
                     }
                     convertValues.append( value );
                 }
+
                 result_.append( convertValues );
 
             }
 
         }
     }
-#ifdef Q_OS_WIN
-    _pclose( pipe );
-#else
-    fclose( pipe );
-#endif
 
+    TSLog( result_.count() );
+    pipe.close();
+    delete proc;
     return true;
 
 }

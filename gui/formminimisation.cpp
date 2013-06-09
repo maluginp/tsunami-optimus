@@ -35,8 +35,8 @@ FormMinimisation::FormMinimisation(int device_id, QWidget *parent) :
         plot->setRangeDrag(Qt::Horizontal|Qt::Vertical);
         plot->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 
-        plot->setInteraction( QCustomPlot::iSelectAxes, QCustomPlot::iSelectPlottables );
-
+//        plot->setInteraction( QCustomPlot::iSelectAxes|QCustomPlot::iSelectPlottables, true );
+        plot->setInteraction( QCustomPlot::iSelectAxes, true );
         QCPItemText *label = new QCPItemText(plot);
         label->setText("");
         label->setPositionAlignment( Qt::AlignRight );
@@ -307,18 +307,18 @@ void FormMinimisation::replotGraphics(QMap<QString,double> parameters){
         mutex.lock();
         QList<EXTRACTOR_PLOT> _plots = managerExtractor->plot( _name, _ranges);
 
-        if( ! mInitRanges.contains(_name) ){
-            if(managerExtractor->device()->polarity() == TDevice::POLARITY_N){
-                plot->xAxis->setRange( _ranges[TDevice::AXIS_X].min, _ranges[TDevice::AXIS_X].max );
-                plot->yAxis->setRange( _ranges[TDevice::AXIS_Y].min, _ranges[TDevice::AXIS_Y].max );
-            }else{
-                plot->xAxis->setRange( -_ranges[TDevice::AXIS_X].max,  -_ranges[TDevice::AXIS_X].min );
-                plot->yAxis->setRange( -_ranges[TDevice::AXIS_Y].max,  -_ranges[TDevice::AXIS_Y].min );
-            }
-            mInitRanges <<  _name ;
-        }
+//        if( ! mInitRanges.contains(_name) ){
+//            if(managerExtractor->device()->polarity() == TDevice::POLARITY_N){
+//                plot->xAxis->setRange( _ranges[TDevice::AXIS_X].min, _ranges[TDevice::AXIS_X].max );
+//                plot->yAxis->setRange( _ranges[TDevice::AXIS_Y].min, _ranges[TDevice::AXIS_Y].max );
+//            }else{
+//                plot->xAxis->setRange( -_ranges[TDevice::AXIS_X].max,  -_ranges[TDevice::AXIS_X].min );
+//                plot->yAxis->setRange( -_ranges[TDevice::AXIS_Y].max,  -_ranges[TDevice::AXIS_Y].min );
+//            }
+//            mInitRanges <<  _name ;
+//        }
 
-//        plot->rescaleAxes();
+
 
         foreach(EXTRACTOR_PLOT _plot,_plots){
             QCPGraph *_graph;
@@ -348,6 +348,7 @@ void FormMinimisation::replotGraphics(QMap<QString,double> parameters){
         }
 
         plot->replot();
+         plot->rescaleAxes();
         mutex.unlock();
 
     }

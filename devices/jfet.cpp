@@ -219,7 +219,9 @@ QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
     MODEL_STRUCT model = getModel();
     circuitModel.level = getLevel( &model.name );
     foreach( TParameter *param,getParameters() ){
-        circuitModel.parameters.insert(param->name(),param->value());
+        if(param->isInclude()){
+            circuitModel.parameters.insert(param->name(),param->value());
+        }
     }
 
     circuit->addModel( circuitModel );
@@ -285,7 +287,9 @@ QVector<QPointF> JFET::getPlotData(QString _plot_type, STEP_RANGE _range)
     MODEL_STRUCT model = getModel();
     circuitModel.level = getLevel( &model.name );
     foreach( TParameter *param,getParameters() ){
-        circuitModel.parameters.insert(param->name(),param->value());
+        if(param->isInclude()){
+            circuitModel.parameters.insert(param->name(),param->value());
+        }
     }
 
     circuit->addModel( circuitModel );

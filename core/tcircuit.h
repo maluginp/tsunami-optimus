@@ -8,7 +8,7 @@
 #include "tnet.h"
 
 struct CIRCUIT_ANALYZE_DC{
-    char* name;
+    char name[100];
     double start;
     double end;
     double step;

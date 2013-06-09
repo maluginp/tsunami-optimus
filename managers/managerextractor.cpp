@@ -126,12 +126,17 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
         EXTRACTOR_PLOT _plot;
 
         for(int i=0; i < points.count();i++){
+
+            if(points.at(i).x() == INFINITY || points.at(i).y() == INFINITY){
+                continue;
+            }
+
             if(device()->polarity() == TDevice::POLARITY_P){
-                _plot.model_x << -points.at(i).x();
-                _plot.model_y << -points.at(i).y();
-            }else{
                 _plot.model_x << points.at(i).x();
                 _plot.model_y << points.at(i).y();
+            }else{
+                _plot.model_x << points.at(i).x();
+                _plot.model_y << -points.at(i).y();
             }
         }
 

@@ -51,6 +51,8 @@ bool TDataset::Open(){
 
         delete dbLayer;
         return true;
+    }else{
+        TSLog( dbLayer->getError() );
     }
 
     delete dbLayer;
