@@ -27,7 +27,7 @@ public:
         mDevice = device;
     }
 
-    QList<EXTRACTOR_PLOT> plot(QString plot_type, QMap<TDevice::Axis,PLOT_AXIS_RANGE> &_ranges);
+    QList<EXTRACTOR_PLOT> plot(QString plot_type);
 
     QStringList plotNames();
 

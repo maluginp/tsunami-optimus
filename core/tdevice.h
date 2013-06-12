@@ -39,8 +39,8 @@ public:
     virtual ~TDevice();
 
     virtual void              init() = 0;
-    virtual QVector<QPointF>  simulate(QString _plot_type, STEP_RANGE _range) = 0;
-    virtual QVector<QPointF>  getPlotData(QString _plot_type, STEP_RANGE _range) = 0;
+    virtual QVector<QPointF>  simulate(QString _plot_type, QMap<QString,STEP_RANGE> ranges) = 0;
+    virtual QVector<QPointF>  getPlotData(QString _plot_type, QMap<QString,STEP_RANGE> ranges) = 0;
     virtual QPointF           computeValue(QString plot_name,QMap<QString,double> values) = 0;
     virtual QString           image() = 0;
 

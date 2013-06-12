@@ -302,10 +302,9 @@ void FormMinimisation::replotGraphics(QMap<QString,double> parameters){
 
         plot->clearGraphs();
 
-        QMap<TDevice::Axis,PLOT_AXIS_RANGE> _ranges;
 
         mutex.lock();
-        QList<EXTRACTOR_PLOT> _plots = managerExtractor->plot( _name, _ranges);
+        QList<EXTRACTOR_PLOT> _plots = managerExtractor->plot( _name);
 
 //        if( ! mInitRanges.contains(_name) ){
 //            if(managerExtractor->device()->polarity() == TDevice::POLARITY_N){

@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QVariant>
 #include <QStringList>
+#include <QMutex>
 #include "tnet.h"
 
 struct CIRCUIT_ANALYZE_DC{
@@ -49,6 +50,7 @@ private:
     QVector< QVector<double> > result_;
 
     bool simulated_;
+
 
 };
 

@@ -72,19 +72,12 @@ bool ManagerExtractor::openDevice(int device_id){
     return false;
 }
 
-QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Axis,PLOT_AXIS_RANGE> &_ranges){
+QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type){
 
     //    TDataset *dataset = mStrategy->dataset();
     //    QList<TMeasure *> measures = dataset->measures( mStrategy->excludePlots() );
 
     QList<EXTRACTOR_PLOT> _plots;
-
-    PLOT_AXIS_RANGE _range;
-    _range.max = -DBL_MAX;
-    _range.min = DBL_MAX;
-    _ranges.clear();
-    _ranges.insert( TDevice::AXIS_X, _range );
-    _ranges.insert( TDevice::AXIS_Y, _range );
 
     QMap<QString,double> _measures;
 
@@ -109,19 +102,15 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
         QStringList _columns = _db.columns;
         int _row_count = _db.table.count();
 
-        STEP_RANGE _step;
-        if(_db.steps.count() > 0){
-            _step = _db.steps.value( _db.steps.keys().at(0) );
-        }else{
-            qDebug() << "step0";
-        }
+        QMap<QString,STEP_RANGE> ranges = strategy()->getDbRanges();
+
 
         device()->setMeasureTerminal( _db.constants );
         device()->setSourceTerminal( _db.constants );
 
 
         QVector< QPointF > points;
-        points =  device()->getPlotData( plot_type , _step  );
+        points =  device()->simulate( plot_type , ranges  );
 
         EXTRACTOR_PLOT _plot;
 
@@ -133,7 +122,7 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
 
             if(device()->polarity() == TDevice::POLARITY_P){
                 _plot.model_x << points.at(i).x();
-                _plot.model_y << points.at(i).y();
+                _plot.model_y << -points.at(i).y();
             }else{
                 _plot.model_x << points.at(i).x();
                 _plot.model_y << -points.at(i).y();
@@ -171,8 +160,8 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type, QMap<TDevice::Ax
 
             if(device()->polarity() == TDevice::POLARITY_P){
 
-                _plot.measure_x << -pointPlot.x();
-                _plot.measure_y << -pointPlot.y();
+                _plot.measure_x << pointPlot.x();
+                _plot.measure_y << pointPlot.y();
             }else{
                 _plot.measure_x << pointPlot.x();
                 _plot.measure_y << pointPlot.y();

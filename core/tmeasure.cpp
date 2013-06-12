@@ -124,18 +124,6 @@ bool TMeasure::Open(){
             _db.constants.insert( constant.attribute("name"),constant.attribute("value").toDouble() );
         }
 
-        QDomNodeList steps = xml_bases.at(i).toElement().elementsByTagName("step");
-        for(int j=0;j < steps.count(); j++){
-            QDomElement step = steps.at(j).toElement();
-            STEP_RANGE _step = {0.0,0.0,0.0};
-            _step.start = step.attribute("start").toDouble();
-            _step.end = step.attribute("end").toDouble();
-            _step.step = step.attribute("step").toDouble();
-
-            _db.steps.insert( step.attribute("name"), _step );
-
-        }
-
 
 
         QDomNodeList items = xml_base.elementsByTagName("items");
@@ -335,15 +323,15 @@ QString TMeasure::stringDB(int id)
         xml_db.appendChild( xml_const );
     }
 
-    foreach( QString _step, _db.steps.keys() ){
-        QDomElement xml_step = xml_doc.createElement("step");
-        xml_step.setAttribute( "name",  _step );
-        xml_step.setAttribute( "start", _db.steps.value(_step).start);
-        xml_step.setAttribute( "end",   _db.steps.value(_step).end);
-        xml_step.setAttribute( "step",  _db.steps.value(_step).step);
+//    foreach( QString _step, _db.steps.keys() ){
+//        QDomElement xml_step = xml_doc.createElement("step");
+//        xml_step.setAttribute( "name",  _step );
+//        xml_step.setAttribute( "start", _db.steps.value(_step).start);
+//        xml_step.setAttribute( "end",   _db.steps.value(_step).end);
+////        xml_step.setAttribute( "step",  _db.steps.value(_step).step);
 
-        xml_db.appendChild( xml_step );
-    }
+//        xml_db.appendChild( xml_step );
+//    }
 
 
     // <items> <item value=""> </items>
@@ -520,7 +508,7 @@ MEASURE_DB TMeasure::importReadDatabase(QStringList text, int &cur_pos,bool &las
 
     QMap< QString, QVector<double> > _step_values;
 
-    STEP_RANGE _step_range = {0.0,0.0,0.0};
+//    STEP_RANGE _step_range = {0.0,0.0,0.0};
 
     for(int _line_pos = cur_pos; _line_pos < _line_count; _line_pos++){
         QString _line = text.at(_line_pos);
@@ -533,26 +521,26 @@ MEASURE_DB TMeasure::importReadDatabase(QStringList text, int &cur_pos,bool &las
                     last=true;
                 }
 
-                foreach( QString _step_name, _step_values.keys()){
+//                foreach( QString _step_name, _step_values.keys()){
 
-                    if( _db.steps.contains(_step_name) ){
+//                    if( _db.steps.contains(_step_name) ){
 
-                        _step_range =  _db.steps[_step_name];
-                        _step_range.start = min( _step_values[ _step_name ] );
-                        _step_range.end = max( _step_values[ _step_name ] );
+//                        _step_range =  _db.steps[_step_name];
+//                        _step_range.start = min( _step_values[ _step_name ] );
+//                        _step_range.end = max( _step_values[ _step_name ] );
 
-                        _db.steps[_step_name] = _step_range;
-                    }
+//                        _db.steps[_step_name] = _step_range;
+//                    }
 
-                }
-
-
-                _step_range.start =0.0;
-                _step_range.end = 0.0;
-                _step_range.step = 0.0;
+//                }
 
 
-                _step_values.clear();
+//                _step_range.start =0.0;
+//                _step_range.end = 0.0;
+//                _step_range.step = 0.0;
+
+
+//                _step_values.clear();
 
                 return _db;
             }
@@ -578,33 +566,33 @@ MEASURE_DB TMeasure::importReadDatabase(QStringList text, int &cur_pos,bool &las
                 continue;
             }
 
-            if(_line.toUpper().startsWith("STEP")){
-                QString _temp = _line.mid(QString("STEP").count()).simplified();
-                if(_temp.isEmpty()){
-                    continue;
-                }
+//            if(_line.toUpper().startsWith("STEP")){
+//                QString _temp = _line.mid(QString("STEP").count()).simplified();
+//                if(_temp.isEmpty()){
+//                    continue;
+//                }
 
-                QStringList _tempVar = _temp.split("=");
-                if(_tempVar.count() != 2){
-                    continue;
-                }
+//                QStringList _tempVar = _temp.split("=");
+//                if(_tempVar.count() != 2){
+//                    continue;
+//                }
 
-                _temp = _tempVar.at(0);
-                _value = _tempVar.at(1).toDouble( &ok );
+//                _temp = _tempVar.at(0);
+//                _value = _tempVar.at(1).toDouble( &ok );
 
-                if(!ok){
-                    continue;
-                }
+//                if(!ok){
+//                    continue;
+//                }
 
-                _step_range.step = _value;
-                _db.steps.insert( _temp, _step_range );
-                QVector<double> _vec;
-                _step_values.insert( _temp, _vec );
+//                _step_range.step = _value;
+//                _db.steps.insert( _temp, _step_range );
+//                QVector<double> _vec;
+//                _step_values.insert( _temp, _vec );
 
-                continue;
+//                continue;
 
 
-            }
+//            }
 
 
             // columns

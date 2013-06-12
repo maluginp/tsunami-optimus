@@ -22,8 +22,8 @@ JFET::JFET(int device_id) : TDevice(device_id){
 
     setType( DEVICE_JFET );
 
-    addPlot( "in", trUtf8("Входная ВАХ"), "Vg", "Id" );
-    addPlot( "out", trUtf8("Выходная ВАХ"), "Vd", "Id" );
+    addPlot( "in", trUtf8("Входная ВАХ"), "Vgs", "Ids" );
+    addPlot( "out", trUtf8("Выходная ВАХ"), "Vds", "Ids" );
 
 
 
@@ -153,9 +153,9 @@ QStringList JFET::constantTitles(QString plot_type){
     QStringList _consts;
 
     if(plot_type == "in"){
-        _consts << "Vd";
+        _consts << "Vds";
     }else if(plot_type == "out"){
-        _consts << "Vg";
+        _consts << "Vgs";
     }
 
     return _consts;
@@ -166,18 +166,19 @@ QStringList JFET::columnTitles(QString plot_type){
     QStringList _columns;
 
     if(plot_type == "in"){
-        _columns << "Vg" << "Id";
+        _columns << "Vgs" << "Ids";
     }else if(plot_type == "out"){
-        _columns << "Vd" << "Id";
+        _columns << "Vds" << "Ids";
     }
 
     return _columns;
 
 }
 
-QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
+QVector<QPointF> JFET::simulate(QString _plot_type, QMap<QString,STEP_RANGE> ranges)
 {
     QMutexLocker locker(&mutexSimulate);
+    QVector<QPointF> simulatedData;
     double Vds = 0.0, Vgs = 0.0;
     Vds = terminal("D")->getVoltage() - terminal("S")->getVoltage();
     Vgs = terminal("G")->getVoltage() - terminal("S")->getVoltage();
@@ -187,7 +188,7 @@ QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
 
 
     net = TNet::createNet( "j1" );
-    net->setTerminals( 4, 2, 1, 0, 3 );
+    net->setTerminals( 3, 2, 1, 0 );
     net->addValue( "fet" );
     circuit->addNet( net );
 
@@ -201,15 +202,21 @@ QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
     net->addValue( Vgs );
     circuit->addNet( net );
 
-    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", 0, 0, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
         strcpy( dcAnalyze.name, "Vds" );
     }
+    if(!ranges.contains(dcAnalyze.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
 
+    dcAnalyze.start = ranges.value(dcAnalyze.name).start;
+    dcAnalyze.end = ranges.value(dcAnalyze.name).end;
     circuit->setAnalyze(dcAnalyze);
-    circuit->addPrint(3,"dc","i(Vds)");
+    circuit->addPrint(2,"dc","i(Vds)");
 
     CIRCUIT_MODEL circuitModel = {"fet", "NJF",0};
 
@@ -226,7 +233,7 @@ QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
 
     circuit->addModel( circuitModel );
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -243,9 +250,10 @@ QVector<QPointF> JFET::simulate(QString _plot_type, STEP_RANGE _range)
     return simulatedData;
 }
 
-QVector<QPointF> JFET::getPlotData(QString _plot_type, STEP_RANGE _range)
+QVector<QPointF> JFET::getPlotData(QString _plot_type, QMap<QString,STEP_RANGE> ranges)
 {
     QMutexLocker locker(&mutexSimulate);
+    QVector<QPointF> simulatedData;
     double Vgs=0.0,Vds=0.0;
     Vds = terminal("D")->getVoltage() - terminal("S")->getVoltage();
     Vgs = terminal("G")->getVoltage() - terminal("S")->getVoltage();
@@ -255,7 +263,7 @@ QVector<QPointF> JFET::getPlotData(QString _plot_type, STEP_RANGE _range)
 
 
     net = TNet::createNet( "j1" );
-    net->setTerminals( 4, 2, 1, 0, 3 );
+    net->setTerminals( 3, 2, 1, 0 );
     net->addValue( "fet" );
     circuit->addNet( net );
 
@@ -269,15 +277,21 @@ QVector<QPointF> JFET::getPlotData(QString _plot_type, STEP_RANGE _range)
     net->addValue( Vgs );
     circuit->addNet( net );
 
-    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", 0, 0, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
         strcpy( dcAnalyze.name, "Vds" );
     }
+    if(!ranges.contains(dcAnalyze.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
 
+    dcAnalyze.start = ranges.value(dcAnalyze.name).start;
+    dcAnalyze.end = ranges.value(dcAnalyze.name).end;
     circuit->setAnalyze(dcAnalyze);
-    circuit->addPrint(3,"dc","i(Vds)");
+    circuit->addPrint(2,"dc","i(Vds)");
 
     CIRCUIT_MODEL circuitModel = {"fet", "NJF",0};
 
@@ -294,7 +308,7 @@ QVector<QPointF> JFET::getPlotData(QString _plot_type, STEP_RANGE _range)
 
     circuit->addModel( circuitModel );
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -315,9 +329,9 @@ QPointF JFET::computeValue(QString plot_name, QMap<QString, double> values){
 
     QPointF point;
     if(plot_name == "in"){
-            point = QPointF(values.value("Vg",INFINITY),values.value("Id",INFINITY));
+            point = QPointF(values.value("Vgs",INFINITY),values.value("Ids",INFINITY));
     }else if(plot_name == "out"){
-        point = QPointF(values.value("Vd",INFINITY),values.value("Id",INFINITY));
+        point = QPointF(values.value("Vds",INFINITY),values.value("Ids",INFINITY));
     }else{
         point = QPointF(INFINITY,INFINITY);
     }

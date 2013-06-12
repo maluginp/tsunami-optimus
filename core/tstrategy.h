@@ -84,6 +84,7 @@ public:
     QString typeDb();
     MEASURE_DB measureDb();
     STRATEGY_DB strategyDb();
+    QMap<QString,STEP_RANGE> getDbRanges();
 
     double weight(double x);
     static GRAPH_WEIGHTS findWeightByConst(QVector<GRAPH_WEIGHTS> weights, QMap<QString,double> constants);

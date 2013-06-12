@@ -51,6 +51,7 @@ void DialogNewDevice::clickAdd(){
     if(!TDevice::Create( name, device,device_id )){
         QMessageBox::information(this,trUtf8("Ошибка"),trUtf8("Устройство не создано"),QMessageBox::Ok);
         reject();
+        return;
     }
 
     // #TODO:

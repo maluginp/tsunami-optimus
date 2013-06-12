@@ -112,13 +112,10 @@ double Extractor::computeFunctionError(){
         strategy()->nextDb();
         MEASURE_DB _db = strategy()->measureDb();
 
-        // нет проверки на steps
-        // Симуляция SPICE модели
-        if( _db.steps.count() != 1 ){
-            // error_code
-            continue;
-        }
 
+
+
+        QMap<QString,STEP_RANGE> ranges = strategy()->getDbRanges();
         QMap<QString,QVariant> _deviceSettings = strategy()->strategyDb().settings;
         foreach(QString _setName, _deviceSettings.keys()){
             device()->setSetting( _setName, _deviceSettings.value( _setName ) );
@@ -128,7 +125,7 @@ double Extractor::computeFunctionError(){
         device()->setSourceTerminal( _db.constants );
 
         _spiceValues = device()->simulate( strategy()->typeDb() ,
-                            _db.steps.value(_db.steps.keys().at(0)) );
+                                           ranges);
 
         int count_row = _db.table.count();
         for(int row=0; row < count_row;row++){

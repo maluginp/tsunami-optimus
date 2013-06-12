@@ -16,8 +16,8 @@ MOSFET::MOSFET(int device_id) : TDevice(device_id)
 
     setType( DEVICE_MOSFET );
 
-    addPlot( "in", trUtf8("Передаточная ВАХ"), "Vg", "Id" );
-    addPlot( "out", trUtf8("Выходная ВАХ"), "Vd", "Id" );
+    addPlot( "in", trUtf8("Передаточная ВАХ"), "Vgs", "Ids" );
+    addPlot( "out", trUtf8("Выходная ВАХ"), "Vds", "Ids" );
 
 
 
@@ -125,7 +125,7 @@ QString MOSFET::image()
 
 
 
-QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
+QVector< QPointF > MOSFET::simulate(QString _plot_type, QMap<QString,STEP_RANGE> ranges){
 
     QMutexLocker locker(&mutexSimulate);
 
@@ -141,7 +141,7 @@ QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
 
     double L = setting( "L" ).toDouble(),
             W = setting( "W" ).toDouble();
-
+QVector<QPointF> simulatedData;
     TCircuit* circuit = new TCircuit("MOSFET simulate","mos.cir",NGSPICE_PATH);
     TNet* net;
     QVector<QVariant> values;
@@ -166,13 +166,19 @@ QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
     net->setTerminals(2, 3, 0 );
     net->addValue( Vbs );
     circuit->addNet( net );
-    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", 0,0, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
         strcpy( dcAnalyze.name, "Vds" );
     }
+    if(!ranges.contains(dcAnalyze.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
 
+    dcAnalyze.start = ranges.value(dcAnalyze.name).start;
+    dcAnalyze.end = ranges.value(dcAnalyze.name).end;
     circuit->setAnalyze(dcAnalyze);
     circuit->addPrint(3,"dc","i(Vds)","i(Vbs)");
 
@@ -191,7 +197,7 @@ QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
 
     circuit->addModel( circuitModel );
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -208,11 +214,11 @@ QVector< QPointF > MOSFET::simulate(QString _plot_type, STEP_RANGE _range){
     return simulatedData;
 }
 
-QVector<QPointF> MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range){
+QVector<QPointF> MOSFET::getPlotData(QString _plot_type, QMap<QString,STEP_RANGE> ranges){
     QMutexLocker locker(&mutexSimulate);
     // Жёстко земля S
     double Vds = 0.0, Vgs = 0.0 ,Vbs = 0.0;
-
+    QVector<QPointF> simulatedData;
     Vds = terminal("D")->getVoltage() - terminal("S")->getVoltage();
     Vgs = terminal("G")->getVoltage() - terminal("S")->getVoltage();
     Vbs = terminal("B")->getVoltage() - terminal("S")->getVoltage();
@@ -247,12 +253,19 @@ QVector<QPointF> MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range){
     net->setTerminals(2, 3, 0 );
     net->addValue( Vbs );
     circuit->addNet( net );
-    CIRCUIT_ANALYZE_DC dcAnalyze = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC dcAnalyze = { "", 0, 0, 0.01 };
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         strcpy( dcAnalyze.name, "Vgs" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
         strcpy( dcAnalyze.name, "Vds" );
     }
+    if(!ranges.contains(dcAnalyze.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
+
+    dcAnalyze.start = ranges.value(dcAnalyze.name).start;
+    dcAnalyze.end = ranges.value(dcAnalyze.name).end;
 
     circuit->setAnalyze(dcAnalyze);
     circuit->addPrint(3,"dc","i(Vds)","i(Vbs)");
@@ -272,7 +285,7 @@ QVector<QPointF> MOSFET::getPlotData(QString _plot_type, STEP_RANGE _range){
 
     circuit->addModel( circuitModel );
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -294,9 +307,9 @@ QStringList MOSFET::constantTitles(QString plot_type){
     QStringList _consts;
 
     if(plot_type.compare("out",Qt::CaseInsensitive) == 0){
-        _consts << "Vd" << "Vb";
+        _consts << "Vds" << "Vbs";
     }else if(plot_type.compare("in",Qt::CaseInsensitive) == 0){
-        _consts << "Vg" << "Vb";
+        _consts << "Vgs" << "Vbs";
     }
 
     return _consts;
@@ -307,9 +320,9 @@ QStringList MOSFET::constantTitles(QString plot_type){
 QStringList MOSFET::columnTitles(QString plot_type){
     QStringList _columns;
     if(plot_type.compare("in",Qt::CaseInsensitive) == 0){
-        _columns << "Vg" << "Id";
+        _columns << "Vgs" << "Ids";
     }else if(plot_type.compare("out",Qt::CaseInsensitive) == 0){
-        _columns << "Vd" << "Id";
+        _columns << "Vds" << "Ids";
     }
     return _columns;
 
@@ -320,9 +333,9 @@ QPointF MOSFET::computeValue(QString plot_name, QMap<QString, double> values){
     QPointF point;
 
     if( plot_name.compare("in",Qt::CaseInsensitive) == 0 ){
-        point = QPointF(values.value( "Vg",0.0 ),values.value( "Id",0.0 ) );
+        point = QPointF(values.value( "Vgs",0.0 ),values.value( "Ids",0.0 ) );
     } else if( plot_name.compare("out",Qt::CaseInsensitive) == 0 ){
-        point = QPointF(values.value( "Vd",0.0 ),values.value( "Id",0.0 ) );
+        point = QPointF(values.value( "Vds",0.0 ),values.value( "Ids",0.0 ) );
     }else{
         point = QPointF(INFINITY,INFINITY);
     }

@@ -96,7 +96,12 @@ QString TDevice::createMap(QVariantMap map)
 
 void TDevice::setMeasureTerminal(QString type, double value){
     QChar _char = type[0].toUpper();
-    QString _terminal_name = type.mid(1).toUpper();
+    type.remove(0,1);
+    QString _terminal_name = type.toUpper();
+    if(type.count() > 1){
+        _terminal_name = _terminal_name.mid(0,1);
+    }
+
 
     if(_char == QChar('I')){
         terminal(_terminal_name)->setMeasure(TTerminal::CURRENT,value);
@@ -126,7 +131,11 @@ QMap<QString, double> TDevice::measureTerminals()
 void TDevice::setSourceTerminal(QString type, double value)
 {
     QChar _char = type[0].toUpper();
-    QString _terminal_name = type.mid(1).toUpper();
+    type.remove(0,1);
+    QString _terminal_name = type.toUpper();
+    if(type.count() > 1){
+        _terminal_name = _terminal_name.mid(0,1);
+    }
 
     if(_char == QChar('I')){
         terminal(_terminal_name)->setCurrent(value);

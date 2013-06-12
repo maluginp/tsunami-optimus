@@ -17,8 +17,8 @@ public:
     BJT(int device_id);
     ~BJT() {}
     void init();
-    QVector< QPointF >  simulate(QString _plot_type, STEP_RANGE _range);
-    QVector< QPointF >  getPlotData(QString _plot_type, STEP_RANGE _range);
+    QVector< QPointF >  simulate(QString _plot_type, QMap<QString,STEP_RANGE> ranges);
+    QVector< QPointF >  getPlotData(QString _plot_type, QMap<QString,STEP_RANGE> ranges);
     QPointF computeValue(QString plot_name, QMap<QString, double> values);
     QString image();
 

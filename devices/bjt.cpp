@@ -26,8 +26,8 @@ BJT::BJT(int device_id) : TDevice(device_id){
     setType( DEVICE_BJT );
 
 
-    addPlot( "in", trUtf8("Входная ВАХ"), "Vb", "Ib" );
-    addPlot( "out", trUtf8("Выходная ВАХ") ,  "Vc", "Ic");
+    addPlot( "in", trUtf8("Входная ВАХ"), "Vbe", "Ib" );
+    addPlot( "out", trUtf8("Выходная ВАХ") ,  "Vce", "Ic");
     addPlot( "betta", trUtf8("Бетта"),  "Ic", "Betta");
 
 
@@ -35,13 +35,13 @@ BJT::BJT(int device_id) : TDevice(device_id){
 
 }
 
-QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
+QVector<QPointF> BJT::simulate(QString _plot_type, QMap<QString,STEP_RANGE> ranges){
 
     QMutexLocker locker(&mutexSimulate);
 
     TCircuit* circuit = new TCircuit("BJT simulate","bjt.cir",NGSPICE_PATH);
     TNet* net;
-
+    QVector<QPointF> simulatedData;
     // Жёстко земля E
     double Vbe = 0.0, Vce=0.0, Ib = 0.0;
     Vbe = terminal("B")->getVoltage() - terminal("E")->getVoltage();
@@ -57,7 +57,7 @@ QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
     net->addValue( Vce );
     circuit->addNet( net );
 
-    CIRCUIT_ANALYZE_DC analyzeDc = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC analyzeDc = { "", 0, 0, 0.01 };
 
 
 
@@ -69,6 +69,7 @@ QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
         circuit->addNet( net );
         ::strcpy( analyzeDc.name, "Vbe");
 
+
         circuit->addPrint(2, "dc", "i(Vbe)" );
     }else if(_plot_type.compare("out", Qt::CaseInsensitive)==0){
         net = TNet::createNet( "Ib" );
@@ -78,6 +79,17 @@ QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
         ::strcpy( analyzeDc.name, "Vce");
         circuit->addPrint(2, "dc", "i(Vce)" );
     }
+
+    if(!ranges.contains(analyzeDc.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
+
+    analyzeDc.start = ranges.value(analyzeDc.name).start;
+    analyzeDc.end = ranges.value(analyzeDc.name).end;
+
+
+
     circuit->setAnalyze( analyzeDc );
 
     CIRCUIT_MODEL circuitModel = {"bjt", "NPN",0};
@@ -94,7 +106,7 @@ QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
         }
     }
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -111,11 +123,11 @@ QVector<QPointF> BJT::simulate(QString _plot_type, STEP_RANGE _range){
     return simulatedData;
 }
 
-QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
-{   QMutexLocker locker(&mutexSimulate);
+QVector<QPointF> BJT::getPlotData(QString _plot_type, QMap<QString, STEP_RANGE> ranges){
+    QMutexLocker locker(&mutexSimulate);
     TCircuit* circuit = new TCircuit("BJT simulate","bjtp.cir",NGSPICE_PATH);
     TNet* net;
-
+    QVector<QPointF> simulatedData;
     // Жёстко земля E
     double Vbe = 0.0, Vce=0.0, Ib = 0.0;
     Vbe = terminal("B")->getVoltage() - terminal("E")->getVoltage();
@@ -131,7 +143,7 @@ QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
     net->addValue( Vce );
     circuit->addNet( net );
 
-    CIRCUIT_ANALYZE_DC analyzeDc = { "", _range.start, _range.end, 0.01 };
+    CIRCUIT_ANALYZE_DC analyzeDc = { "", 0, 0, 0.01 };
 
     if(_plot_type.compare( "in", Qt::CaseInsensitive )==0){
         // Id(Vg)| Vd = const
@@ -150,6 +162,16 @@ QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
         ::strcpy( analyzeDc.name, "Vce");
         circuit->addPrint(2, "dc", "i(Vce)" );
     }
+    if(!ranges.contains(analyzeDc.name)){
+        TSLog("Can't find ranges");
+        return simulatedData;
+    }
+
+    analyzeDc.start = ranges.value(analyzeDc.name).start;
+    analyzeDc.end = ranges.value(analyzeDc.name).end;
+
+
+
     circuit->setAnalyze( analyzeDc );
 
     CIRCUIT_MODEL circuitModel = {"bjt", "NPN",0};
@@ -166,7 +188,7 @@ QVector<QPointF> BJT::getPlotData(QString _plot_type, STEP_RANGE _range)
         }
     }
 
-    QVector<QPointF> simulatedData;
+
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -380,14 +402,14 @@ QStringList BJT::constantTitles(QString plot_type){
     switch(mCommon){
     case COM_EMITTER:
         if(plot_type == "in" || plot_type == "betta"){
-            _constants << "Vc";
+            _constants << "Vce";
         }else if(plot_type == "out"){
             _constants <<  "Ib";
         }
         break;
     case COM_BASE:
         if(plot_type == "in" || plot_type == "betta"){
-            _constants << "Vc";
+            _constants << "Vce";
         }else if(plot_type == "out"){
             _constants <<  "Ib";
         }
@@ -407,38 +429,13 @@ QStringList BJT::columnTitles(QString plot_type)
 {
     QStringList _columns;
 
-    switch(mCommon){
-    case COM_EMITTER:
         if(plot_type == "in"){
-            _columns  << "Vb" << "Ib";
+            _columns  << "Vbe" << "Ib";
         }else if(plot_type == "out"){
-            _columns   << "Vc" <<  "Ic";
+            _columns   << "Vce" <<  "Ic";
         }else if(plot_type == "betta"){
-            _columns << "Vb" << "Ib" << "Vc" << "Ic" << "Betta";
+            _columns << "Vbe" << "Ib" << "Vce" << "Ic" << "Betta";
         }
-        break;
-    case COM_BASE:
-        if(plot_type == "in"){
-            _columns  << "Ve" << "Ie";
-        }else if(plot_type == "out"){
-            _columns  << "Vc" <<  "Ic";
-        }else if(plot_type == "betta"){
-            _columns << "Ie" << "Ic" << "Betta";
-        }
-        break;
-    case COM_COLLECTOR:
-        if(plot_type == "in"){
-            _columns  << "Vb" << "Ib";
-        }else if(plot_type == "out"){
-            _columns  << "Ve" <<  "Ie";
-        }else if(plot_type == "betta"){
-            _columns << "Ib" << "Ie" << "Betta";
-        }
-        break;
-    case COM_UNDEF:
-    default:
-        break;
-    }
 
     return _columns;
 }
@@ -447,12 +444,12 @@ QPointF BJT::computeValue(QString plot_name, QMap<QString, double> values)
 {
     QPointF point;
     if(plot_name == "in"){
-        if(values.contains("Ib") && values.contains("Vb")){
-            point = QPointF( values["Vb"], values["Ib"] );
+        if(values.contains("Ib") && values.contains("Vbe")){
+            point = QPointF( values["Vbe"], values["Ib"] );
         }
     }else if(plot_name == "out"){
-        if(values.contains("Ic") && values.contains("Vc")){
-            point = QPointF( values["Vc"], values["Ic"] );
+        if(values.contains("Ic") && values.contains("Vce")){
+            point = QPointF( values["Vce"], values["Ic"] );
         }
     }else if(plot_name == "betta"){
 //        if(values.contains("Ib") && values.contains("Ic")){

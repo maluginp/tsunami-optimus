@@ -393,6 +393,36 @@ STRATEGY_DB TStrategy::strategyDb()
     return mMeasures.at( mCurrentDb );
 }
 
+QMap<QString, STEP_RANGE> TStrategy::getDbRanges(){
+
+    MEASURE_DB db = measureDb();
+    QMap<QString, STEP_RANGE> ranges;
+    foreach( QString column, db.columns ){
+        STEP_RANGE range = { FLT_MAX,  -FLT_MAX};
+        ranges.insert( column, range );
+    }
+
+    QList<MEASURE_ROW> rows = db.table;
+    for(int i=0; i < rows.count(); ++i){
+        MEASURE_ROW row = rows.at(i);
+        if(row.inc){
+            for(int j=0; j< db.columns.count();j++){
+                if( ranges.value( db.columns.at(j)).start > row.row.at(j) ){
+                    ranges[db.columns.at(j)].start = row.row.at(j);
+                }
+                if( ranges.value( db.columns.at(j)).end < row.row.at(j) ){
+                    ranges[db.columns.at(j)].end = row.row.at(j);
+                }
+
+            }
+
+        }
+    }
+
+    return ranges;
+
+}
+
 double TStrategy::weight(double x){
 
     if(!mIncludeWeight){

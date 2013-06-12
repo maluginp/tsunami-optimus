@@ -50,7 +50,6 @@ void TCircuit::setAnalyze(CIRCUIT_ANALYZE_DC analyze){
         return;
     }
     if( strlen(analyze.name) > 0 &&
-            fabs(analyze.start) < fabs(analyze.end) &&
             fabs( analyze.end - analyze.start ) > fabs(analyze.step)){
         analyzeDc_ = analyze;
     }
@@ -84,7 +83,8 @@ void TCircuit::addPrint(int count,...){
 }
 
 bool TCircuit::simulate(){
-
+    static QMutex mutex_;
+    QMutexLocker locker(&mutex_);
     if(nets_.count() == 0 ||
             fabs(analyzeDc_.start) == INFINITY  ||
             fabs(analyzeDc_.end) == INFINITY ||
@@ -92,6 +92,12 @@ bool TCircuit::simulate(){
         TSLog("Error to simulate: initialized");
         return false;
     }
+    char fullPathSpice[255];
+#ifdef Q_OS_WIN
+    ::sprintf(fullPathSpice,"%s/%s",QDir::currentPath().toAscii().data(),spicePath_);
+#else
+    ::sprintf(fullPathSpice,"%s",spicePath_);
+#endif
 
     char outfile[255];
     strcpy( outfile, filename_ );
@@ -103,7 +109,7 @@ bool TCircuit::simulate(){
     if(QFile::exists(outfile)){
         QFile::remove(outfile);
     }
-    if(!QFile::exists( spicePath_ )){
+    if(!QFile::exists( fullPathSpice )){
         TSLog("Could't find spice simulator");
         return false;
     }
@@ -153,12 +159,12 @@ bool TCircuit::simulate(){
     file.close();
 
 //    ::sprintf(buffer,"-b -o%s %s",outfile,filename_);
-    ::sprintf(buffer,"%s/%s",QDir::currentPath().toAscii().data(),spicePath_);
+
     QStringList args;
     args << "-b" << QString("-o%1").arg(outfile) << filename_;
 
     QProcess *proc = new QProcess();
-    proc->start( buffer, args );
+    proc->start( fullPathSpice, args );
     if(!proc->waitForStarted()){
         return false;
     }
