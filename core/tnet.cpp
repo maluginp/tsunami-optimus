@@ -79,12 +79,10 @@ QString TNet::getString(){
         net.append( QString::fromAscii(temp) );
     }
     foreach( QVariant value, values_ ){
-        TSLog(value);
         ::sprintf(temp,"%s ",value.toString().toAscii().data());
         net.append( QString::fromAscii(temp) );
     }
 
-    TSLog( net );
 
     return net;
 

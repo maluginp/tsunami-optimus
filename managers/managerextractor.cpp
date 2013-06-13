@@ -167,21 +167,6 @@ QList<EXTRACTOR_PLOT> ManagerExtractor::plot(QString plot_type){
                 _plot.measure_y << pointPlot.y();
             }
 
-            // X
-//            if(_plot_values[TDevice::AXIS_X] > _ranges[TDevice::AXIS_X].max){
-//                _ranges[TDevice::AXIS_X].max = _plot_values[TDevice::AXIS_X];
-//            }
-//            if(_plot_values[TDevice::AXIS_X] < _ranges[TDevice::AXIS_X].min){
-//                _ranges[TDevice::AXIS_X].min = _plot_values[TDevice::AXIS_X];
-//            }
-//            // Y
-//            if(_plot_values[TDevice::AXIS_Y] > _ranges[TDevice::AXIS_Y].max){
-//                _ranges[TDevice::AXIS_Y].max = _plot_values[TDevice::AXIS_Y];
-//            }
-//            if(_plot_values[TDevice::AXIS_Y] < _ranges[TDevice::AXIS_Y].min){
-//                _ranges[TDevice::AXIS_Y].min = _plot_values[TDevice::AXIS_Y];
-//            }
-
             _measures.clear();
 
 

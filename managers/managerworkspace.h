@@ -40,8 +40,8 @@ public:
 //    void deviceOpened();
 
 private:
-    TDevice *mCurrentDevice;
-    TDBLayer *mDBLayer;
+    TDevice* deviceCurrent_;
+    TDBLayer* layerDb_;
 
     void Log(QString log);
 

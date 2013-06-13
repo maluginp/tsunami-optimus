@@ -166,8 +166,7 @@ void FormParameters::clickApply(){
 }
 
 void FormParameters::clickCancel(){
-
-    return;
+    close();
 }
 
 void FormParameters::clickAddSet()

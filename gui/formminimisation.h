@@ -64,7 +64,6 @@ private:
     QStringList mInitRanges;
     QTimer *mTimerRunning;
 
-    ReportOptimisation *mReport;
 };
 
 #endif // FORMMINIMISATION_H

@@ -145,37 +145,19 @@ void FormMinimisation::startExtraction()
     ui->progressMinimisation->setValue( 0 );
     ui->logger->clear();
 
-
-
-    mReport = new ReportOptimisation( managerExtractor->extractor()->device()->name() );
-    bool _enableReport =  TSetting::value( "optimisation", "report_enable" ).toBool();
-    QString _formatReport = TSetting::value( "optimisation", "report_format" ).toString();
-//    mReport->setEnable( _enableReport );
-    mReport->setEnable( false );
-    mReport->setFormat( _formatReport );
+    managerExtractor->setMinimisator();
 
     double _startFunctionError = managerExtractor->extractor()->computeFunctionError();
 
-    Log("Запущен процесс экстракции<br/>",LOG_WARNING);
-    LogParameters(0, mInitialParameters );
-    Log(trUtf8("Начальная ошибка: ")+QString("%1").arg(_startFunctionError));
     ui->labelError->setText(QString("%1").arg(_startFunctionError));
-    mReport->addIteration( 0, managerExtractor->parameterSet(), mInitialParameters, _startFunctionError  );
     TDataset *dataset = managerExtractor->strategy()->dataset();
     QList<TMeasure *> measures = dataset->measures(  );
-    mReport->addMeasures( measures );
     measures.clear();
     delete dataset;
 
     ui->labelStatus->setText(trUtf8("Выполняется"));
     mTimerRunning->start();
-
-//    if(!threadFunc.isStarted()){
-        threadFunc = QtConcurrent::run(managerExtractor->extractor(),&Extractor::runMinimisation);
-//     }else{
-//        Log( trUtf8("Не получилось запустить экстракцию, так как процесс уже запущен"), LOG_ERROR );
-//        return;
-//    }
+    threadFunc = QtConcurrent::run(managerExtractor->extractor(),&Extractor::runMinimisation);
 
 
     ui->labelIterations->setText( QString("0/%1").arg(managerExtractor->extractor()->maxIterations()) );
@@ -197,8 +179,6 @@ void FormMinimisation::doneIteration(int iteration,double error){
     mCurrentIteration = iteration;
 
     QMap<QString,double> parameters = managerExtractor->extractor()->parameters();
-
-    mReport->addIteration( iteration, managerExtractor->parameterSet(), parameters, error  );
 
     foreach(QString _name,mOptimizeParameters.keys()){
         if(parameters.contains(_name)){
@@ -283,9 +263,7 @@ void FormMinimisation::doneMinimisation()
 
     ui->btnSaveParameters->setEnabled( true );
 
-    mReport->Save();
 
-    delete mReport;
 
     return;
 }

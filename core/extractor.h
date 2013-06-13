@@ -40,6 +40,7 @@ private:
     QList<TMeasure*>    measures_;
     ERROR_TYPE          typeError_;
     TDevice* createDevice(int device_id);
+    double normalizeDouble(const double val, const int digits);
 
 protected:
     bool                 stopped_;

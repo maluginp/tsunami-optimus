@@ -11,13 +11,13 @@ bool ManagerWorkspace::openDevice(int device_id)
 {
     if(device_id != -1){
 
-        mDBLayer->bindQuery("SELECT name,device FROM devices WHERE id=:id")
+        layerDb_->bindQuery("SELECT name,device FROM devices WHERE id=:id")
                 ->bindValue(":id",device_id)
                 ->exec();
 
-        if(mDBLayer->isNext()){
+        if(layerDb_->isNext()){
 
-            QString device_type = mDBLayer->value("device").toString();
+            QString device_type = layerDb_->value("device").toString();
 
 
             TDevice *device = createDeviceObject( device_id, device_type );
@@ -74,7 +74,7 @@ bool ManagerWorkspace::openDevice(QString name, QString device)
 
 TDevice *ManagerWorkspace::device()
 {
-    return mCurrentDevice;
+    return deviceCurrent_;
 }
 
 bool ManagerWorkspace::showPolarityForm()
@@ -95,12 +95,12 @@ bool ManagerWorkspace::showImageDevice()
 
 void ManagerWorkspace::connectDatabase()
 {
-#ifdef Q_OS_WIN
-    mDBLayer = new TDBLayer(QDir::currentPath()+"/optimus.db");
-#else
-    mDBLayer = new TDBLayer("/Developer/Projects/tsunami-optimus/dbase/optimus.db");
-#endif
-    if( !mDBLayer->isOpened() ){
+//#ifdef Q_OS_WIN
+    layerDb_ = new TDBLayer(QDir::currentPath()+"/optimus.db");
+//#else
+//    mDBLayer = new TDBLayer("/Developer/Projects/tsunami-optimus/dbase/optimus.db");
+//#endif
+    if( !layerDb_->isOpened() ){
         Log("Database didn't open.");
     }
 }
@@ -115,44 +115,44 @@ QMap<QString, QString> ManagerWorkspace::loadDataDevice()
     deviceData.insert("dataset","");
 
 
-    mDBLayer->bindQuery("SELECT m.name AS model FROM devices AS d, models AS m "
+    layerDb_->bindQuery("SELECT m.name AS model FROM devices AS d, models AS m "
                         "WHERE d.model_id=m.id AND d.id=:id")
             ->bindValue(":id",device()->id())
             ->exec();
-    if(mDBLayer->isNext()){
-        deviceData["model"]          =  mDBLayer->value("model").toString();
+    if(layerDb_->isNext()){
+        deviceData["model"]          =  layerDb_->value("model").toString();
     }else{
-        qDebug() << mDBLayer->getError();
+        qDebug() << layerDb_->getError();
     }
 
-    mDBLayer->bindQuery("SELECT s.name AS strategy FROM devices AS d, strategies AS s "
+    layerDb_->bindQuery("SELECT s.name AS strategy FROM devices AS d, strategies AS s "
                         "WHERE d.strategy_id=s.id AND d.id=:id")
             ->bindValue(":id",device()->id())
             ->exec();
-    if(mDBLayer->isNext()){
-        deviceData["strategy"]          =  mDBLayer->value("strategy").toString();
+    if(layerDb_->isNext()){
+        deviceData["strategy"]          =  layerDb_->value("strategy").toString();
     }else{
-        qDebug() << mDBLayer->getError();
+        qDebug() << layerDb_->getError();
     }
 
-    mDBLayer->bindQuery("SELECT p.name AS parameters FROM devices AS d, parameter_sets AS p "
+    layerDb_->bindQuery("SELECT p.name AS parameters FROM devices AS d, parameter_sets AS p "
                         "WHERE d.set_parameters_id=p.id AND d.id=:id")
             ->bindValue(":id",device()->id())
             ->exec();
-    if(mDBLayer->isNext()){
-        deviceData["parameters"] = mDBLayer->value("parameters").toString();
+    if(layerDb_->isNext()){
+        deviceData["parameters"] = layerDb_->value("parameters").toString();
     }else{
-        qDebug() << mDBLayer->getError();
+        qDebug() << layerDb_->getError();
     }
 
-    mDBLayer->bindQuery("SELECT ds.name AS dataset FROM devices AS d, datasets AS ds "
+    layerDb_->bindQuery("SELECT ds.name AS dataset FROM devices AS d, datasets AS ds "
                         "WHERE d.dataset_id=ds.id AND d.id=:id")
             ->bindValue(":id",device()->id())
             ->exec();
-    if(mDBLayer->isNext()){
-        deviceData["dataset"] = mDBLayer->value("dataset").toString();
+    if(layerDb_->isNext()){
+        deviceData["dataset"] = layerDb_->value("dataset").toString();
     }else{
-        qDebug() << mDBLayer->getError();
+        qDebug() << layerDb_->getError();
     }
 
 
@@ -163,7 +163,7 @@ void ManagerWorkspace::setDataDevice(QString name, int data_id)
 {
     if(name == "model"){
 
-        mDBLayer->bindQuery( "UPDATE devices  SET model_id=:id WHERE id=:dev_id" )
+        layerDb_->bindQuery( "UPDATE devices  SET model_id=:id WHERE id=:dev_id" )
                 ->bindValue(":id",data_id)
                 ->bindValue(":dev_id",device()->id())
                 ->exec();
@@ -171,20 +171,20 @@ void ManagerWorkspace::setDataDevice(QString name, int data_id)
         device()->setModelID( data_id );
     }else if(name == "strategy"){
 
-        mDBLayer->bindQuery( "UPDATE devices  SET strategy_id=:id WHERE id=:dev_id" )
+        layerDb_->bindQuery( "UPDATE devices  SET strategy_id=:id WHERE id=:dev_id" )
                 ->bindValue(":id",data_id)
                 ->bindValue(":dev_id",device()->id())
                 ->exec();
         device()->setStrategyID( data_id );
     }else if(name == "parameters"){
 
-        mDBLayer->bindQuery( "UPDATE devices  SET set_parameters_id=:id WHERE id=:dev_id" )
+        layerDb_->bindQuery( "UPDATE devices  SET set_parameters_id=:id WHERE id=:dev_id" )
                 ->bindValue(":id",data_id)
                 ->bindValue(":dev_id",device()->id())
                 ->exec();
         device()->setParametersID(data_id);
     }else if(name == "dataset"){
-        mDBLayer->bindQuery( "UPDATE devices  SET dataset_id=:id WHERE id=:dev_id" )
+        layerDb_->bindQuery( "UPDATE devices  SET dataset_id=:id WHERE id=:dev_id" )
                 ->bindValue(":id",data_id)
                 ->bindValue(":dev_id",device()->id())
                 ->exec();
@@ -197,9 +197,9 @@ void ManagerWorkspace::setDataDevice(QString name, int data_id)
 
     }
 
-    if(!mDBLayer->isRequested()){
+    if(!layerDb_->isRequested()){
         Log("setDataDevice() return false after query");
-        Log(mDBLayer->getError());
+        Log(layerDb_->getError());
     }
 
 
@@ -244,7 +244,7 @@ bool ManagerWorkspace::setSetting(QString name, QVariant value){
 
 void ManagerWorkspace::setCurrentDevice(TDevice *device)
 {
-    mCurrentDevice = device;
+    deviceCurrent_ = device;
 }
 
 
@@ -297,5 +297,5 @@ TDevice *ManagerWorkspace::createDeviceObject(int device_id, QString type)
 
 bool ManagerWorkspace::isDatabaseOpened()
 {
-    return mDBLayer->isOpened();
+    return layerDb_->isOpened();
 }

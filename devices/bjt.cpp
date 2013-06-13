@@ -106,7 +106,7 @@ QVector<QPointF> BJT::simulate(QString _plot_type, QMap<QString,STEP_RANGE> rang
         }
     }
 
-
+    circuit->addModel( circuitModel );
 
     if(!circuit->simulate()){
         TSLog( "Simulated data" );
@@ -188,6 +188,7 @@ QVector<QPointF> BJT::getPlotData(QString _plot_type, QMap<QString, STEP_RANGE> 
         }
     }
 
+    circuit->addModel( circuitModel );
 
 
     if(!circuit->simulate()){

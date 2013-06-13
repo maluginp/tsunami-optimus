@@ -99,21 +99,28 @@ TDevice *Extractor::createDevice(int device_id)
 
 }
 
+double Extractor::normalizeDouble(const double val, const int digits){
+    double power = pow(10, digits);
+    return floor((val * power) + 0.5) / power;
+}
+
 
 // #TODO: Для различных типов графиков своя функция ошибки?????
 double Extractor::computeFunctionError(){
+
+//    QFile* file = new QFile("function_error.txt");
+//    if(!file->open(QIODevice::WriteOnly)){
+//        //
+//    }
+//    file->write("X\tYsim\tYmea\tError\n");
 
     QMutexLocker locker(&mutexFunctionError_);
     double _error = 0.0;
     QVector< QPointF > _spiceValues;
     strategy()->beginDb();
     while( strategy()->isNextDb() ){
-        double error_db = 0.0;
         strategy()->nextDb();
         MEASURE_DB _db = strategy()->measureDb();
-
-
-
 
         QMap<QString,STEP_RANGE> ranges = strategy()->getDbRanges();
         QMap<QString,QVariant> _deviceSettings = strategy()->strategyDb().settings;
@@ -140,44 +147,53 @@ double Extractor::computeFunctionError(){
 
             pointMeasure = device()->computeValue(strategy()->typeDb(), _values );
 
+
             bool _findValue=false;
-            int _countSpiceValues = _spiceValues.count();
-            for(int i=0; i < _countSpiceValues;i++){
-                if(_spiceValues.at(i).x() == pointMeasure.x() ){
+            for(int i=0; i < _spiceValues.count();i++){
+                double spiceValue = normalizeDouble(_spiceValues.at(i).x(),2);
+                if(spiceValue == pointMeasure.x() ){
                     pointSimulate = _spiceValues.at(i);
                     _findValue = true;
                     break;
                 }
             }
 
+            double _temp = 0.0;
+
+
+
             if(!_findValue){
                 continue;
             }
 
-            double _temp = 0.0;
-            double _error_tmp=0.0;
+
+
+
+
             if( typeError_ == ERROR_ABSOLUTE ){
                 //
-                _temp   = pointSimulate.y() - pointMeasure.y();
+                _temp   = fabs(pointSimulate.y()) -  fabs(pointMeasure.y());
                 _temp  /= strategy()->weight( pointSimulate.x() );
-                _error_tmp = (_temp * _temp);
-
-                error_db += _error_tmp;
                 _error += (_temp * _temp);
             }else{
                 _temp   = MAX_VALUE( fabs(pointSimulate.y()), fabs(pointMeasure.y()) );
+                _temp = fabs(pointMeasure.y());
                 if(_temp != 0.0){
-                    _temp   = (fabs(pointSimulate.y())) - fabs(pointMeasure.y())/_temp;
+                    _temp   = fabs(pointSimulate.y())- fabs(pointMeasure.y())/_temp;
                     _temp  /= strategy()->weight( pointSimulate.x() );
-                    _error_tmp = (_temp * _temp);
-                    error_db += _error_tmp;
+
                     _error += (_temp * _temp);
                 }
             }
+
+//            file->write( QString("%1\t%2\t%3\t%4\n").arg(pointMeasure.x()).
+//                         arg(pointSimulate.y()).arg(pointMeasure.y()).
+//                         arg( _temp*_temp ).toAscii() );
         }
 
     }
-
+//    file->flush();
+//    file->close();
 
     return _error;
 
